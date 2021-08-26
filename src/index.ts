@@ -7,6 +7,11 @@ import { UniswapV2FactoryAbi } from "./abi/uniswapV2FactoryAbi";
 import { ContractFunctions } from "./functions/contractFunctions";
 import { EthFunctions } from "./functions/ethFunctions";
 import dotenv = require('dotenv');
+import * as express from 'express'
+import { ApolloServer } from 'apollo-server-express'
+import { importSchema } from 'graphql-import'
+import * as path from 'path'
+import { resolvers } from './resolvers/resolvers'
 
 dotenv.config();
 
@@ -27,6 +32,32 @@ const factoryAbi = factoryAbiModule.getAbi();
 const exchangeAbi = exchangeAbiModule.getAbi();
 const tokenAbi = tokenAbiModule.getAbi();
 const uniswapV2FactoryAbi = uniswapV2FactoryAbiModule.getAbi();
+
+
+const app  = express();
+const typeDefs = importSchema(path.join(__dirname, 'schema/schema.graphql'))
+
+const server = new ApolloServer({ typeDefs, resolvers });
+
+const startServer = async() => {
+  console.log("hi");
+  await server.start();
+  server.applyMiddleware({ app });
+  app.listen({ port: 4000 }, () =>
+    console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`)
+  )
+  
+}
+startServer();
+
+console.log("hey");
+
+
+
+
+//Launches Express server, to which Apollo is integrated
+
+
 
 
 
@@ -118,19 +149,19 @@ async function main() {
   // console.log(txnsCount);
 
 
-  const contractFunctions = ContractFunctions();
-  let totalSupply = await contractFunctions.getTotalSupply(contract);
+  const contractFunctions = ContractFunctions(web3);
+  let totalSupply = await contractFunctions.getTokenName(address);
   console.log(totalSupply);
 
-  const ethFunctions = EthFunctions();
+  const ethFunctions = EthFunctions(web3);
 
-  let txnsList = await ethFunctions.getAllTxns(address, 20, web3);
+  let txnsList = await ethFunctions.getAllTxns(addressLink, 20);
   console.log(txnsList);
 
 
 }
 
-main();
+//main();
 
 
 

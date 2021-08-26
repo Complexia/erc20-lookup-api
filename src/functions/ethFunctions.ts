@@ -1,8 +1,8 @@
 //functions which query the blockchain
-export const EthFunctions = () => {
+export const EthFunctions = (web3: any) => {
 
     //gets transactions from last #block blocks (10k limit on alchemy per call) if logs are available (most contracts)
-    const getAllTxns = async( address: string, blocks: number, web3: any ) => {
+    const getAllTxns = async( address: string, blocks: number ) => {
         let currentBlock = await web3.eth.getBlockNumber();
         //gets data from the last 10k blocks
         let txnsData = await web3.eth.getPastLogs({ fromBlock: currentBlock - blocks, toBlock: currentBlock, address: address });
@@ -17,7 +17,7 @@ export const EthFunctions = () => {
     }
 
     //get txns count if no logs on contract from last #block blocks. No cap but very slow
-    const getTxnsCount = async(address: string, block: number, web3: any) => {
+    const getTxnsCount = async(address: string, block: number ) => {
 
         let currentBlock = await web3.eth.getBlockNumber();
         let txnsCount = 0; //await web3.eth.getTransactionCount(address, currentBlock);
@@ -31,7 +31,7 @@ export const EthFunctions = () => {
     }
 
     //gets all txns from #block when no logs are available on contract
-    const getAllTxnsNoLogs = async(address: string, block: number, web3: any) => {
+    const getAllTxnsNoLogs = async(address: string, block: number ) => {
 
         let txnsList: any = []; //all txns
         
@@ -53,7 +53,8 @@ export const EthFunctions = () => {
                             let txn = {
                                 from: e.from,
                                 to: e.to,
-                                hash: e.hash
+                                hash: e.hash,
+                                value: e.value.toString(10)
                             }
                             txnsList.push(txn);
                             console.log(i, e.from, e.to, e.hash, e.value.toString(10));
@@ -63,7 +64,8 @@ export const EthFunctions = () => {
                             let txn = {
                                 from: e.from,
                                 to: e.to,
-                                hash: e.hash
+                                hash: e.hash,
+                                value: e.value.toString(10)
                             }
                             txnsList.push(txn);
                             console.log(i, e.from, e.to, e.hash, e.value.toString(10));

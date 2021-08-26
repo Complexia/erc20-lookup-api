@@ -1,0 +1,17 @@
+type Txn {
+    txnHash: String
+    blockNumber: Int
+    topics: [String] 
+}
+
+
+type Query {
+
+    getTokenName(address: String): String!
+
+    getTotalSupply(address: String): String!
+
+    getTxnsList(address: String, block: Int): [Txn]
+
+    
+}
