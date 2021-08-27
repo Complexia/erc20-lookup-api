@@ -172,7 +172,8 @@ async function getTokenPrice(address: string) {
   let currentBlock = await web3.eth.getBlockNumber();
   let uniswapV3FactoryAddress = "0x1F98431c8aD98523631AE4a59f267346ea31F984";
   let uniswap = new web3.eth.Contract(uniswapV3FactoryAbi, uniswapV3FactoryAddress);
-  let events = await uniswap.getPastEvents("PoolCreated", { fromBlock: currentBlock - 13000000, toBlock: currentBlock });
+  let uniswapV3FactoryCreationBlock = 12369621; 
+  let events = await uniswap.getPastEvents("PoolCreated", { fromBlock: uniswapV3FactoryCreationBlock, toBlock: currentBlock });
   let wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
   let poolAddresses: any = [];
   let poolContracts: any = [];
