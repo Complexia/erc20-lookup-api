@@ -14,6 +14,7 @@ import * as path from 'path'
 import { resolvers } from './resolvers/resolvers'
 import { UniswapV3FactoryAbi } from "./abi/uniswapV3FactoryAbi";
 import { UniswapV3PoolAbi } from "./abi/uniswapV3PoolAbi";
+const axios = require('axios').default;
 
 dotenv.config();
 
@@ -146,10 +147,55 @@ async function getTransferEvent(fromBlock: number, toBlock: number) {
 }
 
 async function getContractCreationDate(address: string) {
+  let uniswapV2FactoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
+  let uniswapV2Factory = new web3.eth.Contract(uniswapV2FactoryAbi, uniswapV2FactoryAddress);
+  let uniswapV2FactoryCreationBlock = 10000835;
+  let uniswapV3FactoryCreationBlock = 12369621;
   let currentBlock = await web3.eth.getBlockNumber();
-  let txnFound = false;
+  //let currentBlock = uniswapV3FactoryCreationBlock;
+  console.log("here we are");
+  let poolAddresses: any = [];
+  let eventsRecorded: any = [];
+  let blockIncrementV2 = 2000;
+  let fromBlockV2 = uniswapV2FactoryCreationBlock;
+  while(fromBlockV2 + blockIncrementV2 < currentBlock) {
+    
+    let events = await uniswapV2Factory.getPastEvents("PairCreated", { fromBlock: fromBlockV2, toBlock: fromBlockV2 + blockIncrementV2 });
+    eventsRecorded = eventsRecorded.concat(events);
+    console.log(fromBlockV2, events.length, eventsRecorded.length);
+    
+    fromBlockV2 += blockIncrementV2;
+    blockIncrementV2 += 2000;
+    
+  }
+  
+  console.log(eventsRecorded.length);
+  let blockNumbers: any = [];
+  for(let i = 0; i < eventsRecorded.length; i++) {
+    if(eventsRecorded[i].returnValues.token0.toLowerCase() == address.toLowerCase() || eventsRecorded[i].returnValues.token1.toLowerCase() == address.toLowerCase()) {
+      
+      console.log("found");
+      //let token0Name = await contractFunctions.getTokenName(events[i].returnValues.token0);
+      //let token1Name = await contractFunctions.getTokenName(events[i].returnValues.token1);
+      //console.log(token0Name, token1Name);
+      blockNumbers.push(eventsRecorded[i].blockNumber);
 
-  while(currentBlock >= 0 && !txnFound) {
+      // console.log(eventsRecorded[i].returnValues.pair);
+      // poolAddresses.push(eventsRecorded[i].returnValues.pair);
+      // let poolContract = new web3.eth.Contract(uniswapV3PoolAbi, poolAddress);
+      // poolContracts.push(poolContract);
+        
+            
+    }
+  }
+  blockNumbers = blockNumbers.reverse();
+  console.log("Earliest block", blockNumbers[0]);
+
+
+  
+  let txnFound = false;
+  currentBlock = blockNumbers[0];
+  while(currentBlock >= uniswapV2FactoryCreationBlock && !txnFound) {
     const block = await web3.eth.getBlock(currentBlock, true);
     const txns = block.transactions;
 
@@ -159,7 +205,7 @@ async function getContractCreationDate(address: string) {
         if(receipt.contractAddress && receipt.contractAddress.toLowerCase() === address.toLowerCase()) {
           txnFound = true;
           console.log(`Contract Creator Address: ${txns[i].from}`);
-          console.log(currentBlock);
+          console.log("Creation block: ", currentBlock);
         }
       }
     }
@@ -168,54 +214,141 @@ async function getContractCreationDate(address: string) {
   }
 }
 
-async function getTokenPrice(address: string) {
+async function getTokenPriceETH(address: string) {
   let currentBlock = await web3.eth.getBlockNumber();
+  let addressUSDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+  let addressUSDT = "0xdac17f958d2ee523a2206206994597c13d831ec7";
+  let contractUSDC = new web3.eth.Contract(tokenAbi, addressUSDC);
+  let contractUSDT = new web3.eth.Contract(tokenAbi, addressUSDT);
+  let contract = new web3.eth.Contract(tokenAbi, address);
+
   let uniswapV3FactoryAddress = "0x1F98431c8aD98523631AE4a59f267346ea31F984";
   let uniswap = new web3.eth.Contract(uniswapV3FactoryAbi, uniswapV3FactoryAddress);
   let uniswapV3FactoryCreationBlock = 12369621; 
-  let events = await uniswap.getPastEvents("PoolCreated", { fromBlock: uniswapV3FactoryCreationBlock, toBlock: currentBlock });
+
+  let uniswapV2FactoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
+  let uniswapV2Factory = new web3.eth.Contract(uniswapV2FactoryAbi, uniswapV2FactoryAddress);
+  let uniswapV2FactoryCreationBlock = 10000835;
+
   let wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
   let poolAddresses: any = [];
-  let poolContracts: any = [];
-  for(let i = 0; i < events.length; i++) {
-    if(events[i].returnValues.token0.toLowerCase() == address.toLowerCase() || events[i].returnValues.token1.toLowerCase() == address.toLowerCase()) {
-      if(events[i].returnValues.token0.toLowerCase() == wethAddress.toLowerCase() || events[i].returnValues.token1.toLowerCase() == wethAddress.toLowerCase()) {
-        console.log("found");
-        let token0Name = await contractFunctions.getTokenName(events[i].returnValues.token0);
-        let token1Name = await contractFunctions.getTokenName(events[i].returnValues.token1);
-        console.log(token0Name, token1Name);
-        console.log(events[i].returnValues.pool);
-        poolAddresses.push(events[i].returnValues.pool);
-        // let poolContract = new web3.eth.Contract(uniswapV3PoolAbi, poolAddress);
-        // poolContracts.push(poolContract);
-        
-      }      
+
+
+  //simulating cached pools reduces time by about 5secs
+  // let pool1 = '0xa6Cc3C2531FdaA6Ae1A3CA84c2855806728693e8';
+  // let pool2 = '0x5d4F3C6fA16908609BAC31Ff148Bd002AA6b8c83';
+  // let pool3 = '0x3A0f221eA8B150f3D3d27DE8928851aB5264bB65';
+  
+  // poolAddresses.push(pool1);
+  // poolAddresses.push(pool2);
+  // poolAddresses.push(pool3);
+
+  let events = await uniswap.getPastEvents("PoolCreated", { fromBlock: uniswapV3FactoryCreationBlock, toBlock: currentBlock });
+  
+  
+  let fromBlockV2 = uniswapV2FactoryCreationBlock;
+  
+  let blockIncrementV2 = 2000;
+  while (poolAddresses.length == 0) {
+
+    for(let i = 0; i < events.length; i++) {
+      if(events[i].returnValues.token0.toLowerCase() == address.toLowerCase() || events[i].returnValues.token1.toLowerCase() == address.toLowerCase()) {
+        if(events[i].returnValues.token0.toLowerCase() == wethAddress.toLowerCase() || events[i].returnValues.token1.toLowerCase() == wethAddress.toLowerCase()) {
+          console.log("found");
+          let token0Name = await contractFunctions.getTokenName(events[i].returnValues.token0);
+          let token1Name = await contractFunctions.getTokenName(events[i].returnValues.token1);
+          console.log(token0Name, token1Name);
+          if(blockIncrementV2 == 10000){
+
+            console.log(events[i].returnValues.pool);
+            poolAddresses.push(events[i].returnValues.pool);
+          }
+          else {
+            console.log(events[i].returnValues.pair);
+            poolAddresses.push(events[i].returnValues.pair);
+          }
+          // let poolContract = new web3.eth.Contract(uniswapV3PoolAbi, poolAddress);
+          // poolContracts.push(poolContract);
+          
+        }      
+      }
     }
+    //in case uniswap v3 does not have transactions
+    if(poolAddresses.length == 0) {
+      console.log("UniswapV3 has no pools for this token...Searching V2...");
+      
+      events = await uniswapV2Factory.getPastEvents("PairCreated", { fromBlock: fromBlockV2, toBlock: fromBlockV2 + blockIncrementV2 });
+      fromBlockV2 += blockIncrementV2;
+      blockIncrementV2 += 2000;
+      //console.log(12500000 + blockIncrementV2);
   }
+    
+  }
+
+
   //console.log(poolContracts);
   //let balanceToken = await poolContracts[0].methods.token0().call();
   //let balanceWeth = await poolContracts[0].methods.token1.call();
   //console.log("HOHOHEY", balanceToken);
+  let contractToken = new web3.eth.Contract(tokenAbi, address);
   let contractWeth = new web3.eth.Contract(minAbi, wethAddress);
   let totalBalanceToken = 0;
   let totalBalanceWeth = 0;
+  
   for(let i = 0; i < poolAddresses.length; i++) {
-
-    let balanceToken1 = await contract.methods.balanceOf(poolAddresses[i]).call();
+    console.log(poolAddresses[i]);
+    let balanceToken1 = await contractToken.methods.balanceOf(poolAddresses[i]).call();
     let balanceToken2 = await contractWeth.methods.balanceOf(poolAddresses[i]).call();
-    balanceToken1 = web3.utils.fromWei(balanceToken1, 'ether')
-    balanceToken2 = web3.utils.fromWei(balanceToken2, 'ether')
+    
+    
+    
     totalBalanceToken = totalBalanceToken + parseFloat(balanceToken1);
     totalBalanceWeth = totalBalanceWeth + parseFloat(balanceToken2);
+    
     console.log(balanceToken1, balanceToken2);
     
   }
+  let token1Decimal = await contractToken.methods.decimals().call();
 
+  if(totalBalanceToken == 0) {
+    return 0;
+  }
+  totalBalanceToken = totalBalanceToken / Math.pow(10, token1Decimal);
+  
+  totalBalanceWeth = totalBalanceWeth / Math.pow(10, 18); //weth decimal is 18
   console.log(totalBalanceToken, totalBalanceWeth);
-  let tokenPriceEth = (totalBalanceToken / totalBalanceWeth) / poolAddresses.length;
-  console.log("Price: ", tokenPriceEth);
+  
+  let tokenPriceEth = 0;
+  let tokenPriceInEth = 0;
+  if(totalBalanceToken > totalBalanceWeth) {
+
+    tokenPriceEth = (totalBalanceToken / totalBalanceWeth) / poolAddresses.length;
+    tokenPriceInEth = 1/tokenPriceEth;
+  }
+  else {
+    tokenPriceEth = (totalBalanceWeth / totalBalanceToken); 
+    tokenPriceInEth = tokenPriceEth;
+  }
+  
+  
+  
+  
+  //console.log("Price: ", tokenPriceEth);
+  //let ethPrice = await axios.get("https://api.coingecko.com/api/v3/simple/price?ids=Ethereum&vs_currencies=usd");
+  //console.log(ethPrice.data.ethereum.usd);
+  //console.log("Price: ", tokenPriceInEth);
+  //let tokenPriceUSD = tokenPriceInEth * parseFloat(ethPrice.data.ethereum.usd);
+  //console.log("Price in USD:", tokenPriceUSD);
   // console.log(events[0].returnValues.token0, events[0].blockNumber);
   // console.log(events.length);
+  return tokenPriceInEth
+}
+
+async function getTokenPriceUSD(address: string) {
+  let tokenPriceEth = await getTokenPriceETH(address);
+  let ethPrice = await axios.get("https://api.coingecko.com/api/v3/simple/price?ids=Ethereum&vs_currencies=usd");
+  let tokenPriceUSD = tokenPriceEth * parseFloat(ethPrice.data.ethereum.usd);
+  return tokenPriceUSD;
 }
 
 
@@ -232,10 +365,11 @@ async function main() {
   
   // console.log("The latest block number is " + blockNumber);
   // console.log("hi");
-
-  // let tokenName = await getTokenName(contract);
+  // let addressU = "0xbbca2b6b6e8c76ba2d53f8d3cbab00a9e5535fe3";
+  
+  // let tokenName = await contractFunctions.getTokenName(addressU);
   // console.log(tokenName);
-  // let totalSupply = await getTotalSupply(contract);
+  // let totalSupply = await contractFunctions.getTotalSupply(addressU);
   // console.log(totalSupply);
 
   // let txnsList = await getAllTxns(addressLink, 100);
@@ -257,8 +391,15 @@ async function main() {
   // let txnsList = await ethFunctions.getAllTxns(addressLink, 20);
   // console.log(txnsList);
   let addressBabyDoge = "0xc85FeA5c8DB5bfc80E40DD9D5999C239C1d6DA07";
-  //getContractCreationDate(addressBabyDoge);
-  getTokenPrice(addressLink);
+  let addressUSDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+  let addressWBTC = "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599";
+  let addressAAVE = "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9";
+  let addressUNI = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984";
+  
+  getContractCreationDate(addressBabyDoge);
+  // let price = await getTokenPriceETH(addressBabyDoge);
+  // console.log(price);
+  //getContractCreationDate(addressLink);
 
 
 }
