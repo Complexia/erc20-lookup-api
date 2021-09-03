@@ -2,6 +2,8 @@ import { ContractFunctions } from "../functions/contractFunctions"
 
 import dotenv = require('dotenv');
 import { EthFunctions } from "../functions/ethFunctions";
+import { UniswapFunctions } from "../functions/uniswapFunctions";
+
 
 dotenv.config();
 
@@ -28,7 +30,20 @@ export const resolvers = {
             let txnsList = await ethFunctions.getAllTxns(address, block);
             //console.log(txnsList);
             return txnsList;
+        },
+
+        getPriceETH: async(_:any, { address }) => {
+            const uniswapFunctions = UniswapFunctions(web3);
+            let tokenPriceETH = await uniswapFunctions.getTokenPriceETH(address);
+            return tokenPriceETH;
+        },
+
+        getPriceUSD: async(_:any, { address }) => {
+            const uniswapFunctions = UniswapFunctions(web3);
+            let tokenPriceETH = await uniswapFunctions.getTokenPriceUSD(address);
+            return tokenPriceETH;
         }
+
 
 
         
