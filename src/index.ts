@@ -256,6 +256,9 @@ async function getTokenPriceETH(address: string) {
   let poolAddresses: any = [];
 
   let versionIndicator = 3;
+
+  let contractToken = new web3.eth.Contract(tokenAbi, address);
+  let contractWeth = new web3.eth.Contract(minAbi, wethAddress);
   
   //let events = await uniswap.getPastEvents("PoolCreated", { fromBlock: uniswapV3FactoryCreationBlock, toBlock: currentBlock });
   let poolAddress = await uniswapV3Factory.methods.getPool(address, wethAddress, 3000).call();
@@ -272,7 +275,16 @@ async function getTokenPriceETH(address: string) {
   
   
   if(!poolAddress || !(poolAddress == "0x0000000000000000000000000000000000000000")) {
-    poolAddresses.push(poolAddress);
+    let balanceWeth = await contractWeth.methods.balanceOf(poolAddress).call();
+    //balanceWeth = parseFloat(balanceWeth) / Math.pow(10,18);
+    
+    
+    if(!(balanceWeth < 100)) {
+      poolAddresses.push(poolAddress);
+      console.log("hhs");
+    }
+    
+    
   }
 
   if(poolAddresses.length == 0) {
@@ -284,6 +296,8 @@ async function getTokenPriceETH(address: string) {
     }
        
   }
+
+  console.log(poolAddresses[0]);
   if(poolAddresses.length == 0) {
     console.log("Uniswap V2 does not have pools for this token...");
     versionIndicator = 0;
@@ -292,12 +306,15 @@ async function getTokenPriceETH(address: string) {
   let tokenPriceETH = 0;
   if(versionIndicator == 3) {
     let contractPoolV3 = new web3.eth.Contract(uniswapV3PoolAbi, poolAddresses[0]);
-    let contractToken = new web3.eth.Contract(tokenAbi, address);
-    let n = await contractPoolV3.methods.slot0().call();
     
+    let n = await contractPoolV3.methods.slot0().call();
+    console.log(n)
     tokenPriceETH = (Math.pow(parseFloat(n.sqrtPriceX96), 2) / (Math.pow(2, 192)));
+    
     let tokenDecimal = await contractToken.methods.decimals().call();
+    console.log(tokenDecimal);
     tokenPriceETH = tokenPriceETH / Math.pow(10,(18 - tokenDecimal));
+    console.log(tokenPriceETH);
   }
   else if(versionIndicator = 2) {
     //let contractPoolV2 = new web3.eth.Contract(uniswapV2PoolAbi, poolAddresses[0]);
@@ -395,6 +412,7 @@ async function main() {
   let addressAAVE = "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9";
   let addressUNI = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984";
   let addressWeth = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
+  let addressFloki = "0x43f11c02439e2736800433b4594994bd43cd066d";
   
   //getContractCreationDate(addressKishu);
   //getTransferEvents(addressKishu);
@@ -476,9 +494,9 @@ async function main() {
 
   //console.log(tokenPriceETH);
 
-  // let pool = await uniswapV3Factory.methods.getPool(addressLink, addressWeth, 500).call();
+  //let pool = await uniswapV3Factory.methods.getPool(addressLink, addressWeth, 500).call();
   // console.log(pool);
-  //console.log(await getTokenPriceUSD(addressWBTC));
+  console.log(await getTokenPriceUSD(addressFloki));
   // let poolAddress = await uniswapV3Factory.methods.getPool(addressUSDC, addressWeth, 10000).call();
   // console.log(poolAddress);
   // let pairAddress = await uniswapV2Factory.methods.getPair(addressLink, addressWETH).call();
