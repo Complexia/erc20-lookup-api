@@ -42,7 +42,14 @@ export const resolvers = {
             const uniswapFunctions = UniswapFunctions(web3);
             let tokenPriceETH = await uniswapFunctions.getTokenPriceUSD(address);
             return tokenPriceETH;
+        },
+
+        getEarliestUniswapPool: async(_:any, { address }) => {
+            const uniswapFunctions = UniswapFunctions(web3);
+            let earliestPool = await uniswapFunctions.getEarliestUniswapPool(address);
+            return earliestPool;
         }
+
 
 
 

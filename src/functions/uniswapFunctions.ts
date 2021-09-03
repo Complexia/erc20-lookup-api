@@ -146,8 +146,65 @@ export const UniswapFunctions = (web3: any) => {
         return tokenPriceUSD;
       }
 
+      const getEarliestUniswapPool = async(address: string) => {
+
+        let uniswapV2FactoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
+        let uniswapV2Factory = new web3.eth.Contract(uniswapV2FactoryAbi, uniswapV2FactoryAddress);
+        //console.log(uniswapV2Factory);
+        let uniswapV2FactoryCreationBlock = 10000835;
+        let uniswapV3FactoryCreationBlock = 12369621;
+        let currentBlock = await web3.eth.getBlockNumber();
+        //let currentBlock = uniswapV3FactoryCreationBlock;
+        // let addressWeth = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
+
+
+        // let pairAddress = await uniswapV2Factory.methods.getPair(addressLink, addressWeth).call();
+        // let pairPool = new web3.eth.Contract(uniswapV2PoolAbi, pairAddress);
+        
+        let poolAddresses: any = [];
+        let eventsRecorded: any = [];
+        let blockIncrementV2 = 2000;
+        let fromBlockV2 = uniswapV2FactoryCreationBlock;
+        while(fromBlockV2 + blockIncrementV2 < currentBlock) {
+            
+            let events = await uniswapV2Factory.getPastEvents("PairCreated", { fromBlock: fromBlockV2, toBlock: fromBlockV2 + blockIncrementV2 });
+            eventsRecorded = eventsRecorded.concat(events);
+            console.log(fromBlockV2, events.length, eventsRecorded.length);
+            
+            fromBlockV2 += blockIncrementV2;
+            blockIncrementV2 += 2000;
+            
+        }
+        
+        console.log(eventsRecorded.length);
+        let blockNumbers: any = [];
+        for(let i = 0; i < eventsRecorded.length; i++) {
+            if(eventsRecorded[i].returnValues.token0.toLowerCase() == address.toLowerCase() || eventsRecorded[i].returnValues.token1.toLowerCase() == address.toLowerCase()) {
+            
+            console.log("found");
+            //let token0Name = await contractFunctions.getTokenName(events[i].returnValues.token0);
+            //let token1Name = await contractFunctions.getTokenName(events[i].returnValues.token1);
+            //console.log(token0Name, token1Name);
+            console.log(eventsRecorded[i].blockNumber)
+            blockNumbers.push(eventsRecorded[i].blockNumber);
+
+            // console.log(eventsRecorded[i].returnValues.pair);
+            // poolAddresses.push(eventsRecorded[i].returnValues.pair);
+            // let poolContract = new web3.eth.Contract(uniswapV3PoolAbi, poolAddress);
+            // poolContracts.push(poolContract);
+                
+                    
+            }
+        }
+        blockNumbers = blockNumbers.sort();
+        console.log(blockNumbers, "Earliest block", blockNumbers[0]);
+        return blockNumbers[0];
+
+      } 
+
       return {
           getTokenPriceETH: getTokenPriceETH,
-          getTokenPriceUSD: getTokenPriceUSD
+          getTokenPriceUSD: getTokenPriceUSD,
+          getEarliestUniswapPool: getEarliestUniswapPool
       }
 }

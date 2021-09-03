@@ -169,11 +169,17 @@ async function getEarliestUniswapPool(address: string) {
 
   let uniswapV2FactoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
   let uniswapV2Factory = new web3.eth.Contract(uniswapV2FactoryAbi, uniswapV2FactoryAddress);
+  //console.log(uniswapV2Factory);
   let uniswapV2FactoryCreationBlock = 10000835;
   let uniswapV3FactoryCreationBlock = 12369621;
   let currentBlock = await web3.eth.getBlockNumber();
   //let currentBlock = uniswapV3FactoryCreationBlock;
-  console.log("here we are");
+  // let addressWeth = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
+
+
+  // let pairAddress = await uniswapV2Factory.methods.getPair(addressLink, addressWeth).call();
+  // let pairPool = new web3.eth.Contract(uniswapV2PoolAbi, pairAddress);
+  
   let poolAddresses: any = [];
   let eventsRecorded: any = [];
   let blockIncrementV2 = 2000;
@@ -496,11 +502,17 @@ async function main() {
 
   //let pool = await uniswapV3Factory.methods.getPool(addressLink, addressWeth, 500).call();
   // console.log(pool);
-  console.log(await getTokenPriceUSD(addressFloki));
+  //console.log(await getTokenPriceUSD(addressFloki));
   // let poolAddress = await uniswapV3Factory.methods.getPool(addressUSDC, addressWeth, 10000).call();
   // console.log(poolAddress);
   // let pairAddress = await uniswapV2Factory.methods.getPair(addressLink, addressWETH).call();
   // console.log(pairAddress);
+
+  //console.log(await getEarliestUniswapPool(addressLink));
+
+  let pairAddress = await uniswapV2Factory.methods.getPair(addressLink, addressWeth).call();
+  let pairPool = new web3.eth.Contract(uniswapV2PoolAbi, pairAddress);
+  //console.log(pairPool);
 }
 
 main();

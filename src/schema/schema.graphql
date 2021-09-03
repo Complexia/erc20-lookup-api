@@ -17,5 +17,7 @@ type Query {
 
     getPriceUSD(address: String): String!
 
+    getEarliestUniswapPool(address: String): String!
+
     
 }
