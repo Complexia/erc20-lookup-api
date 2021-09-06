@@ -318,15 +318,15 @@ async function main() {
   //let pairAddress = await uniswapV2Factory.methods.getPair(addressLink, addressWeth).call();
   //let pairPool = new web3.eth.Contract(uniswapV2PoolAbi, pairAddress);
   //console.log(pairPool);
-   let ethFunctions = EthFunctions(web3);
-  // let uniswapFunctions  = UniswapFunctions(web3);
-  // console.log(await uniswapFunctions.getTokenPriceUSD(addressAAVE));
-  let currentBlock = await web3.eth.getBlockNumber();
-  // let txnsData = await ethFunctions.getAllTxns(addressLink, currentBlock-20, currentBlock );
-  // console.log(txnsData);
+  //  let ethFunctions = EthFunctions(web3);
+  // // let uniswapFunctions  = UniswapFunctions(web3);
+  // // console.log(await uniswapFunctions.getTokenPriceUSD(addressAAVE));
+  // let currentBlock = await web3.eth.getBlockNumber();
+  // // let txnsData = await ethFunctions.getAllTxns(addressLink, currentBlock-20, currentBlock );
+  // // console.log(txnsData);
 
-  let txn = await web3.eth.getTransaction("0xa2e5643ae3b1aaff1686f6d015f1a32f580309a79e508dee5003159c225bb930");
-  console.log(txn);
+  // let txn = await web3.eth.getTransaction("0xa2e5643ae3b1aaff1686f6d015f1a32f580309a79e508dee5003159c225bb930");
+  // console.log(txn);
 
   //console.log(await web3.eth.getTransactionCount(addressBabyDoge));
 
