@@ -63,7 +63,7 @@ export const UniswapFunctions = (web3: any) => {
             
             if(!(balanceWeth < 100)) {
             poolAddresses.push(poolAddress);
-            console.log("hhs");
+            
             }
             
             
@@ -108,7 +108,7 @@ export const UniswapFunctions = (web3: any) => {
             balanceToken = parseFloat(balanceToken) / Math.pow(10, token1Decimal)
             balanceWeth = parseFloat(balanceWeth) / Math.pow(10, 18);
 
-            tokenPriceETH = 1/ (balanceToken / (balanceWeth + 1));
+            tokenPriceETH = 1/ (balanceToken / (balanceWeth));
         }
         else {
             tokenPriceETH = 0;
@@ -200,11 +200,40 @@ export const UniswapFunctions = (web3: any) => {
         console.log(blockNumbers, "Earliest block", blockNumbers[0]);
         return blockNumbers[0];
 
-      } 
+      }
+      
+      async function getContractCreationDate(address: string) {
+  
+
+        let uniswapV2FactoryCreationBlock = 10000835;
+        let uniswapV3FactoryCreationBlock = 12369621;
+      
+        let currentBlock = await getEarliestUniswapPool(address);
+        let txnFound = false;
+        
+        while(currentBlock >= uniswapV2FactoryCreationBlock && !txnFound) {
+          const block = await web3.eth.getBlock(currentBlock, true);
+          const txns = block.transactions;
+      
+          for(let i = 0; i < txns.length; i++) {
+            if(!txns[i].to) {
+              const receipt = await web3.eth.getTransactionReceipt(txns[i].hash);
+              if(receipt.contractAddress && receipt.contractAddress.toLowerCase() === address.toLowerCase()) {
+                txnFound = true;
+                console.log(`Contract Creator Address: ${txns[i].from}`);
+                console.log("Creation block: ", currentBlock);
+              }
+            }
+          }
+          currentBlock--;
+          console.log(currentBlock);
+        }
+      }
 
       return {
           getTokenPriceETH: getTokenPriceETH,
           getTokenPriceUSD: getTokenPriceUSD,
-          getEarliestUniswapPool: getEarliestUniswapPool
+          getEarliestUniswapPool: getEarliestUniswapPool,
+          getContractCreationDate: getContractCreationDate
       }
 }

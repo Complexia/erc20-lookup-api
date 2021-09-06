@@ -2,16 +2,39 @@
 export const EthFunctions = (web3: any) => {
 
     //gets transactions from last #block blocks (10k limit on alchemy per call) if logs are available (most contracts)
-    const getAllTxns = async( address: string, blocks: number ) => {
-        let currentBlock = await web3.eth.getBlockNumber();
-        //gets data from the last 10k blocks
-        let txnsData = await web3.eth.getPastLogs({ fromBlock: currentBlock - blocks, toBlock: currentBlock, address: address });
+    const getAllTxns = async( address: string, fromBlock: number, toBlock: number ) => {
+        //if not specified, looks from latest block
+        if(fromBlock == 0) {
+            fromBlock =  await web3.eth.getBlockNumber();
+        }
+        //if not specified, checks last 100 blocks
+        if(toBlock == 0) {
+            toBlock = 100;
+        }
+        
+        //gets data from k to n blocks. can be iterated form the front end for more txns
+        let txnsData = await web3.eth.getPastLogs({ address: address, fromBlock: fromBlock, toBlock: toBlock });
         //let transactionData = await web3.eth.getTransaction("0xf66ad6c21118da5bc8e79cb0912b98cc7a3e30826000bbb419b617417909a5f2");
         let txnsList: any = []; //all txns
         
-        txnsData.forEach( rec => {
-            txnsList.push({ txnHash: rec.transactionHash, blockNumber: rec.blockNumber, topics: rec.topics });
-        });
+        for(let i = 0; i < txnsData.length; i++) {
+            let txn = await web3.eth.getTransaction(txnsData[i].transactionHash);
+            let valueEth = parseFloat(txn.value) / Math.pow(10, 18); //from wei
+            
+            let gasEth = parseFloat(txn.gasPrice) / Math.pow(10, 18); //gas used
+            let gasProvidedEth = parseFloat(txn.gas) / Math.pow(10, 18); //gas provided
+            txnsList.push({ from: txn.from, to: txn.to, value: valueEth, gasPaid: gasEth, gasProvided: gasProvidedEth, txnHash: txnsData[i].transactionHash, blockNumber: txn.blockNumber })
+            console.log(txnsList.length);
+        }
+
+        // txnsData.forEach( async rec => {
+        //     let txn = await web3.eth.getTransaction(rec.transactionHash);
+        //     let valueEth = parseFloat(txn.value) / Math.pow(10, 18);
+        //     let gasEth = parseFloat(txn.gasPrice) / Math.pow(10,18);
+        //     txnsList.push({ from: txn.from, to: txn.to, value: valueEth, gas: gasEth, txnHash: rec.transactionHash, blockNumber: txn.blockNumber })
+        //     console.log(txnsList.length);
+        //     //txnsList.push({ txnHash: rec.transactionHash, blockNumber: rec.blockNumber, topics: rec.topics });
+        // });
         //to get txnsCount get length of txnsList
         return txnsList;
     }

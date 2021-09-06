@@ -11,7 +11,7 @@ type Query {
 
     getTotalSupply(address: String): String!
 
-    getTxnsList(address: String, block: Int): [Txn]
+    getTxnsList(address: String, fromBlock: Int, toBlock: Int): [Txn]
 
     getPriceETH(address: String): String!
 

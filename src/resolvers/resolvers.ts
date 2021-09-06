@@ -25,9 +25,9 @@ export const resolvers = {
             return totalSupply;
         },
 
-        getTxnsList: async(_: any, { address, block }) => {
+        getTxnsList: async(_: any, { address, fromBlock, toBlock }) => {
             const ethFunctions = EthFunctions(web3);
-            let txnsList = await ethFunctions.getAllTxns(address, block);
+            let txnsList = await ethFunctions.getAllTxns(address, fromBlock, toBlock);
             //console.log(txnsList);
             return txnsList;
         },
