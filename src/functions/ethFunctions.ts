@@ -13,7 +13,16 @@ export const EthFunctions = (web3: any) => {
         }
         
         //gets data from k to n blocks. can be iterated form the front end for more txns
-        let txnsData = await web3.eth.getPastLogs({ address: address, fromBlock: fromBlock, toBlock: toBlock });
+        let txnsData: any = [];
+        //get at least 10 txns
+        while(txnsData.length < 10) {
+            let data = await web3.eth.getPastLogs({ address: address, fromBlock: fromBlock, toBlock: toBlock });
+            txnsData = txnsData.concat(data);
+            let x = toBlock;
+            toBlock = fromBlock;
+            fromBlock = x - 10;
+        }
+        
         //let transactionData = await web3.eth.getTransaction("0xf66ad6c21118da5bc8e79cb0912b98cc7a3e30826000bbb419b617417909a5f2");
         let txnsList: any = []; //all txns
         
@@ -21,21 +30,13 @@ export const EthFunctions = (web3: any) => {
             let txn = await web3.eth.getTransaction(txnsData[i].transactionHash);
             let valueEth = parseFloat(txn.value) / Math.pow(10, 18); //from wei
             
-            let gasEth = parseFloat(txn.gasPrice) / Math.pow(10, 18); //gas used
-            let gasProvidedEth = parseFloat(txn.gas) / Math.pow(10, 18); //gas provided
-            txnsList.push({ from: txn.from, to: txn.to, value: valueEth, gasPaid: gasEth, gasProvided: gasProvidedEth, txnHash: txnsData[i].transactionHash, blockNumber: txn.blockNumber })
+            let gasGwei: number = parseFloat(txn.gasPrice) / Math.pow(10, 9); //gas price in gwei
+            let txnsFeeEth: number = ((gasGwei + (parseFloat(txn.maxFeePerGas) / Math.pow(10,9))) * (parseFloat(txn.gas) / 10)) / Math.pow(10, 9) ; //gas provided
+            txnsList.push({ from: txn.from, to: txn.to, value: valueEth, gasPaid: gasGwei.toString(), txnFeeEth: txnsFeeEth.toString(), txnHash: txnsData[i].transactionHash, blockNumber: txn.blockNumber })
             console.log(txnsList.length);
         }
 
-        // txnsData.forEach( async rec => {
-        //     let txn = await web3.eth.getTransaction(rec.transactionHash);
-        //     let valueEth = parseFloat(txn.value) / Math.pow(10, 18);
-        //     let gasEth = parseFloat(txn.gasPrice) / Math.pow(10,18);
-        //     txnsList.push({ from: txn.from, to: txn.to, value: valueEth, gas: gasEth, txnHash: rec.transactionHash, blockNumber: txn.blockNumber })
-        //     console.log(txnsList.length);
-        //     //txnsList.push({ txnHash: rec.transactionHash, blockNumber: rec.blockNumber, topics: rec.topics });
-        // });
-        //to get txnsCount get length of txnsList
+        
         return txnsList;
     }
 

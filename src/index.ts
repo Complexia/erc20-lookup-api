@@ -205,13 +205,13 @@ async function main() {
   // console.log(txnsCount);
 
 
-  // const contractFunctions = ContractFunctions(web3);
+  const contractFunctions = ContractFunctions(web3);
   // let totalSupply = await contractFunctions.getTotalSupply(address);
   // console.log(totalSupply);
 
   //await getTransferEvent(10,20);
 
-  // const ethFunctions = EthFunctions(web3);
+  const ethFunctions = EthFunctions(web3);
 
   // let txnsList = await ethFunctions.getAllTxns(addressLink, 20);
   // console.log(txnsList);
@@ -325,10 +325,11 @@ async function main() {
   // // let txnsData = await ethFunctions.getAllTxns(addressLink, currentBlock-20, currentBlock );
   // // console.log(txnsData);
 
-  // let txn = await web3.eth.getTransaction("0xa2e5643ae3b1aaff1686f6d015f1a32f580309a79e508dee5003159c225bb930");
-  // console.log(txn);
-
-  //console.log(await web3.eth.getTransactionCount(addressBabyDoge));
+  let txn = await web3.eth.getTransaction("0xc29bdcddf1d85a0409081da2585b2d4bb940ec20707cafd20bac1ec0798dc6aa");
+  //console.log(txn);
+  let currentBlock: number = await web3.eth.getBlockNumber();
+  //console.log(await web3.eth.getTransactionCount(addressLink));
+  console.log(await ethFunctions.getAllTxns(addressBabyDoge, currentBlock - 10, currentBlock ));
 
 
 

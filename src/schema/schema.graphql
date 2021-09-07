@@ -1,7 +1,11 @@
 type Txn {
+    from: String
+    to: String
+    value: String
+    gasPaid: String
+    txnFeeEth: String
     txnHash: String
     blockNumber: Int
-    topics: [String] 
 }
 
 
