@@ -173,7 +173,22 @@ async function getTransferEvents(address: string) {
 
 
 
+async function getAllPoolsV2() {
 
+  let uniswapV2FactoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
+  let uniswapV2Factory = new web3.eth.Contract(uniswapV2FactoryAbi, uniswapV2FactoryAddress);
+  let allPairsLength = await uniswapV2Factory.methods.allPairsLength().call();
+  console.log(allPairsLength);
+  let pair = await uniswapV2Factory.methods.allPairs(2).call();
+  console.log(pair);
+  let pairContract = new web3.eth.Contract(uniswapV2PoolAbi, pair);
+  let tokenAddress = await pairContract.methods.token0().call();
+  let tokenContract = new web3.eth.Contract(minAbi, tokenAddress);
+  let tokenName = await tokenContract.methods.name().call();
+  console.log(tokenName);
+  //token1Name, token2Name, token1Address, token2Address, poolAddress, 
+
+}
 
 
 
@@ -325,16 +340,35 @@ async function main() {
   // // let txnsData = await ethFunctions.getAllTxns(addressLink, currentBlock-20, currentBlock );
   // // console.log(txnsData);
 
-  let txn = await web3.eth.getTransaction("0xc29bdcddf1d85a0409081da2585b2d4bb940ec20707cafd20bac1ec0798dc6aa");
-  //console.log(txn);
-  let currentBlock: number = await web3.eth.getBlockNumber();
+  // let txn = await web3.eth.getTransaction("0xc29bdcddf1d85a0409081da2585b2d4bb940ec20707cafd20bac1ec0798dc6aa");
+  // console.log(txn);
+  // let input = txn.input;
+  // let amountHex = input.slice(74, input.length)
+  // let amountTransferred = parseInt(amountHex, 16);
+  // //let amountTransferred = web3.utils.toDecimal(amountHex);
+  // amountTransferred = amountTransferred / Math.pow(10,18);
+  // console.log(amountTransferred);
+  //let currentBlock: number = await web3.eth.getBlockNumber();
   //console.log(await web3.eth.getTransactionCount(addressLink));
-  console.log(await ethFunctions.getAllTxns(addressBabyDoge, currentBlock - 10, currentBlock ));
+  //console.log(await ethFunctions.getAllTxns(addressLink, currentBlock - 10, currentBlock ));
 
+ 
+  
+
+  // for(let i = 0; i < allPairsLength; i++) {
+  //   let pair = await uniswapV2Factory.methods.allPairs(i).call();
+  //   console.log(pair);
+  // }
+  
+  let qwertAddress = "0x6509f9cdcd547b06482fc79209c71c7c7493d5f1";
+  let someAddress = "0x8b3192f5eebd8579568a2ed41e6feb402f93f73f";
+  console.log(await uniswapFunctions.getTokenPriceUSD(someAddress));
 
 
 
 }
+
+
 
 main();
 

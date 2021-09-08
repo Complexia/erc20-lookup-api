@@ -1,5 +1,10 @@
+import { TokenAbi } from "../abi/tokenAbi";
+
 //functions which query the blockchain
 export const EthFunctions = (web3: any) => {
+
+    let tokenAbiModule = TokenAbi();
+    let tokenAbi = tokenAbiModule.getAbi();
 
     //gets transactions from last #block blocks (10k limit on alchemy per call) if logs are available (most contracts)
     const getAllTxns = async( address: string, fromBlock: number, toBlock: number ) => {
@@ -25,14 +30,23 @@ export const EthFunctions = (web3: any) => {
         
         //let transactionData = await web3.eth.getTransaction("0xf66ad6c21118da5bc8e79cb0912b98cc7a3e30826000bbb419b617417909a5f2");
         let txnsList: any = []; //all txns
-        
+
+        const contract = new web3.eth.Contract(tokenAbi, address);
+        let tokenDecimal = await contract.methods.decimals().call();
+
         for(let i = 0; i < txnsData.length; i++) {
             let txn = await web3.eth.getTransaction(txnsData[i].transactionHash);
             let valueEth = parseFloat(txn.value) / Math.pow(10, 18); //from wei
+            let input = txn.input;
+            let amountHex = input.slice(74, input.length)
+            let amountTransferred = parseInt(amountHex, 16);
+            
+            amountTransferred = amountTransferred / Math.pow(10, tokenDecimal);
+            console.log(amountTransferred);
             
             let gasGwei: number = parseFloat(txn.gasPrice) / Math.pow(10, 9); //gas price in gwei
             let txnsFeeEth: number = ((gasGwei + (parseFloat(txn.maxFeePerGas) / Math.pow(10,9))) * (parseFloat(txn.gas) / 10)) / Math.pow(10, 9) ; //gas provided
-            txnsList.push({ from: txn.from, to: txn.to, value: valueEth, gasPaid: gasGwei.toString(), txnFeeEth: txnsFeeEth.toString(), txnHash: txnsData[i].transactionHash, blockNumber: txn.blockNumber })
+            txnsList.push({ from: txn.from, to: txn.to, value: valueEth, amount: amountTransferred, gasPaid: gasGwei.toString(), txnFeeEth: txnsFeeEth.toString(), txnHash: txnsData[i].transactionHash, blockNumber: txn.blockNumber })
             console.log(txnsList.length);
         }
 

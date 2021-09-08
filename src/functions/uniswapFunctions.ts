@@ -60,9 +60,8 @@ export const UniswapFunctions = (web3: any) => {
             let balanceWeth = await contractWeth.methods.balanceOf(poolAddress).call();
             //balanceWeth = parseFloat(balanceWeth) / Math.pow(10,18);
             
-            
-            if(!(balanceWeth < 100)) {
-            poolAddresses.push(poolAddress);
+            if(!(balanceWeth < 95000000000016)) {
+                poolAddresses.push(poolAddress);
             
             }
             
@@ -88,15 +87,25 @@ export const UniswapFunctions = (web3: any) => {
         let tokenPriceETH = 0;
         if(versionIndicator == 3) {
             let contractPoolV3 = new web3.eth.Contract(uniswapV3PoolAbi, poolAddresses[0]);
-            
+            console.log(poolAddresses[0]);
             let n = await contractPoolV3.methods.slot0().call();
-            console.log(n)
-            tokenPriceETH = (Math.pow(parseFloat(n.sqrtPriceX96), 2) / (Math.pow(2, 192)));
-            
+            console.log(n);
             let tokenDecimal = await contractToken.methods.decimals().call();
-            console.log(tokenDecimal);
+            
+            tokenPriceETH = (Math.pow(parseFloat(n.sqrtPriceX96), 2)) / Math.pow(2, 192);
+            
+            
+            
             tokenPriceETH = tokenPriceETH / Math.pow(10,(18 - tokenDecimal));
-            console.log(tokenPriceETH);
+            console.log("Price ETH", tokenPriceETH);
+
+            ////////////////////////
+
+            
+            
+
+
+
         }
         else if(versionIndicator = 2) {
             //let contractPoolV2 = new web3.eth.Contract(uniswapV2PoolAbi, poolAddresses[0]);
@@ -105,14 +114,18 @@ export const UniswapFunctions = (web3: any) => {
             let balanceToken = await contractToken.methods.balanceOf(poolAddresses[0]).call();
             let balanceWeth = await contractWeth.methods.balanceOf(poolAddresses[0]).call();
             let token1Decimal = await contractToken.methods.decimals().call();
+            
             balanceToken = parseFloat(balanceToken) / Math.pow(10, token1Decimal)
             balanceWeth = parseFloat(balanceWeth) / Math.pow(10, 18);
 
-            tokenPriceETH = 1/ (balanceToken / (balanceWeth));
+            
+
+            tokenPriceETH = 1/ (balanceToken / balanceWeth);
         }
         else {
             tokenPriceETH = 0;
         }
+        console.log("Price ETH", tokenPriceETH);
         return tokenPriceETH;
       
       }
