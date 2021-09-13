@@ -175,18 +175,189 @@ async function getTransferEvents(address: string) {
 
 async function getAllPoolsV2() {
 
+  let minAbiBytes = [  
+    // balanceOf
+    {    
+      constant: true,
+      inputs: [{ name: "_owner", type: "address" }],
+      name: "balanceOf",
+      outputs: [{ name: "balance", type: "uint256" }],
+      type: "function",
+    },
+    //name
+    { 
+      constant: true, 
+      inputs:[],
+      name: "name",
+      outputs: [{name: "", type: "bytes32"}],
+      payable: false, 
+      type: "function"
+    },
+    {
+      constant: true,
+      inputs: [],
+      name: "totalSupply",
+      outputs:[{name: "totalSupply", type: "uint256"}],
+      type: "function",
+  
+    },
+    
+  
+  ];
+
   let uniswapV2FactoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
   let uniswapV2Factory = new web3.eth.Contract(uniswapV2FactoryAbi, uniswapV2FactoryAddress);
   let allPairsLength = await uniswapV2Factory.methods.allPairsLength().call();
   console.log(allPairsLength);
-  let pair = await uniswapV2Factory.methods.allPairs(2).call();
-  console.log(pair);
-  let pairContract = new web3.eth.Contract(uniswapV2PoolAbi, pair);
-  let tokenAddress = await pairContract.methods.token0().call();
-  let tokenContract = new web3.eth.Contract(minAbi, tokenAddress);
-  let tokenName = await tokenContract.methods.name().call();
-  console.log(tokenName);
-  //token1Name, token2Name, token1Address, token2Address, poolAddress, 
+  let poolArray: any = [];
+
+  // for(let i = 0; i < allPairsLength; i++) {
+
+  //   let poolAddress = await uniswapV2Factory.methods.allPairs(i).call();
+  
+  //   let pairContract = new web3.eth.Contract(uniswapV2PoolAbi, poolAddress);
+  //   let token0Address = await pairContract.methods.token0().call();
+  //   let token0Contract = new web3.eth.Contract(minAbi, token0Address);
+  //   let token0Name = "";
+  //   try {
+  //     token0Name = await token0Contract.methods.name().call();
+  //   }
+  //   catch {
+  //     token0Contract = new web3.eth.Contract(minAbiBytes, token0Address);
+  //     token0Name = web3.utils.toAscii(await token0Contract.methods.name().call());
+  //   }
+    
+  //   let token1Address = await pairContract.methods.token1().call();
+  //   let token1Contract = new web3.eth.Contract(minAbi, token1Address);
+  //   let token1Name = "";
+  //   try {
+  //     token1Name = await token1Contract.methods.name().call();
+  //   }
+  //   catch {
+  //     token1Contract = new web3.eth.Contract(minAbiBytes, token1Address);
+  //     token1Name = await token1Contract.methods.name().call();
+  //   }
+
+    
+  //   let pool = {
+  //     token0Name: token0Name,
+  //     token1Name: token1Name,
+  //     token0Address: token0Address,
+  //     token1Address: token1Address,
+  //     poolAddress: poolAddress
+  //   }
+  //   console.log(pool);
+  //   console.log(i);
+  //   poolArray.push(pool);
+
+  // }
+
+
+
+    let poolAddress = await uniswapV2Factory.methods.allPairs(58).call();
+    
+    
+    let pairContract = new web3.eth.Contract(uniswapV2PoolAbi, poolAddress);
+    let token0Address = await pairContract.methods.token0().call();
+    let token0Contract = new web3.eth.Contract(minAbi, token0Address);
+    console.log("here");
+    console.log(token0Address);
+    let token0Name = "";
+    try {
+      token0Name = await token0Contract.methods.name().call();
+    }
+    catch {
+      token0Contract = new web3.eth.Contract(minAbiBytes, token0Address);
+      
+
+      token0Name = web3.utils.toAscii(await token0Contract.methods.name().call());
+      
+      
+    }
+    
+    let token1Address = await pairContract.methods.token1().call();
+    let token1Contract = new web3.eth.Contract(minAbi, token1Address);
+    let token1Name = "";
+    try {
+      token1Name = await token1Contract.methods.name().call();
+    }
+    catch {
+      token1Contract = new web3.eth.Contract(minAbiBytes, token1Address);
+      token1Name = await token1Contract.methods.name().call();
+    }
+
+
+      let pool = {
+        token0Name: token0Name,
+        token1Name: token1Name,
+        token0Address: token0Address,
+        token1Address: token1Address,
+        poolAddress: poolAddress
+      }
+      console.log(pool);
+      
+      
+
+
+
+
+
+
+
+
+
+  // let poolAddress = await uniswapV2Factory.methods.allPairs(25).call();
+  // console.log(poolAddress, 25);
+  // let pairContract = new web3.eth.Contract(uniswapV2PoolAbi, poolAddress);
+  // let token0Address = await pairContract.methods.token0().call();
+  // console.log(token0Address);
+  // let token0Contract = new web3.eth.Contract(minAbi, token0Address);
+  // try {
+  //   let token0Name = web3.utils.toAscii(await token0Contract.methods.name().call());
+  // }
+  // catch {
+  //   console.log("caught");
+  //   token0Contract = new web3.eth.Contract(minAbiBytes, token0Address);
+  //   let token0Name = web3.utils.toAscii(await token0Contract.methods.name().call());
+  //   console.log(token0Name);
+  // }
+  
+  // let token1Address = await pairContract.methods.token1().call();
+  // let token1Contract = new web3.eth.Contract(minAbi, token1Address);
+  // let token1Name = await token1Contract.methods.name().call();
+  // console.log(token1Name);
+
+  
+  // let pool = {
+  //   token0Name: token0Name,
+  //   token1Name: token1Name,
+  //   token0Address: token0Address,
+  //   token1Address: token1Address,
+  //   poolAddress: poolAddress
+  // }
+  // //poolArray.push(pool);
+
+
+  // console.log(pool);
+
+
+
+  
+  
+  let data = JSON.stringify(poolArray);
+  
+  //console.log(token1Name);
+  //token0Name, token1Name, token0Address, token1Address, poolAddress, 
+
+  // const fs = require('fs');
+
+  // // write JSON string to a file
+  // fs.writeFile('uniswapV2Pools.json', data, (err) => {
+  //   if (err) {
+  //       throw err;
+  //   }
+  //   console.log("JSON data is saved.");
+  // });
 
 }
 
@@ -362,7 +533,10 @@ async function main() {
   
   let qwertAddress = "0x6509f9cdcd547b06482fc79209c71c7c7493d5f1";
   let someAddress = "0x8b3192f5eebd8579568a2ed41e6feb402f93f73f";
-  console.log(await uniswapFunctions.getTokenPriceUSD(someAddress));
+  let addressXBE = "0x5de7cc4bcbca31c473f6d2f27825cfb09cc0bb16";
+  console.log(await uniswapFunctions.getTokenPriceUSD(addressBabyDoge));
+
+  //getAllPoolsV2();
 
 
 

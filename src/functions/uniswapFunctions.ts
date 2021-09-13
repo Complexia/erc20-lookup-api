@@ -67,14 +67,28 @@ export const UniswapFunctions = (web3: any) => {
             
             
         }
-
+        let addressUSDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+        let addressUSDT = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
+        let usdcIndicator = 0;
         if(poolAddresses.length == 0) {
             console.log("UniswapV3 has no pools for this token...Searching V2...");
             let pairAddress = await uniswapV2Factory.methods.getPair(address, wethAddress).call();
+            if(pairAddress == "0x0000000000000000000000000000000000000000") {
+                
+                pairAddress = await uniswapV2Factory.methods.getPair(address, addressUSDC).call();
+                usdcIndicator = 1;
+                
+            }
+            if(pairAddress == "0x0000000000000000000000000000000000000000") {
+                pairAddress = await uniswapV2Factory.methods.getPair(address, addressUSDT).call();
+                usdcIndicator = 1;
+                
+            }
             if(pairAddress && !(pairAddress == "0x0000000000000000000000000000000000000000")) {
             poolAddresses.push(pairAddress);
             versionIndicator = 2;
             }
+            
             
         }
 
@@ -84,20 +98,23 @@ export const UniswapFunctions = (web3: any) => {
             versionIndicator = 0;
             return 0;
         }
-        let tokenPriceETH = 0;
+        let tokenPriceETH = {
+            usdc: 0,
+            price: 0
+        };
         if(versionIndicator == 3) {
             let contractPoolV3 = new web3.eth.Contract(uniswapV3PoolAbi, poolAddresses[0]);
             console.log(poolAddresses[0]);
             let n = await contractPoolV3.methods.slot0().call();
-            console.log(n);
+            
             let tokenDecimal = await contractToken.methods.decimals().call();
             
-            tokenPriceETH = (Math.pow(parseFloat(n.sqrtPriceX96), 2)) / Math.pow(2, 192);
+            tokenPriceETH.price = (Math.pow(parseFloat(n.sqrtPriceX96), 2)) / Math.pow(2, 192);
             
             
             
-            tokenPriceETH = tokenPriceETH / Math.pow(10,(18 - tokenDecimal));
-            console.log("Price ETH", tokenPriceETH);
+            tokenPriceETH.price = tokenPriceETH.price / Math.pow(10,(18 - tokenDecimal));
+            console.log("Price ETH", tokenPriceETH.price);
 
             ////////////////////////
 
@@ -110,22 +127,36 @@ export const UniswapFunctions = (web3: any) => {
         else if(versionIndicator = 2) {
             //let contractPoolV2 = new web3.eth.Contract(uniswapV2PoolAbi, poolAddresses[0]);
             let contractToken = new web3.eth.Contract(tokenAbi, address);
-            let contractWeth = new web3.eth.Contract(minAbi, wethAddress);
+            let contractToken2 = new web3.eth.Contract(minAbi, wethAddress);
+            if(usdcIndicator == 1) {
+                
+                contractToken2 = new web3.eth.Contract(minAbi, addressUSDT);
+            }
+            
             let balanceToken = await contractToken.methods.balanceOf(poolAddresses[0]).call();
-            let balanceWeth = await contractWeth.methods.balanceOf(poolAddresses[0]).call();
+            let balanceToken2 = await contractToken2.methods.balanceOf(poolAddresses[0]).call();
             let token1Decimal = await contractToken.methods.decimals().call();
             
             balanceToken = parseFloat(balanceToken) / Math.pow(10, token1Decimal)
-            balanceWeth = parseFloat(balanceWeth) / Math.pow(10, 18);
+            if(usdcIndicator == 0) {
+
+                balanceToken2= parseFloat(balanceToken2) / Math.pow(10, 18);
+            }
+            else {
+                balanceToken2= parseFloat(balanceToken2) / Math.pow(10, 6);
+                tokenPriceETH.usdc = 1;
+                
+            }
 
             
-
-            tokenPriceETH = 1/ (balanceToken / balanceWeth);
+            
+            tokenPriceETH.price = 1/ (balanceToken / balanceToken2);
+            
         }
         else {
-            tokenPriceETH = 0;
+            tokenPriceETH.price = 0;
         }
-        console.log("Price ETH", tokenPriceETH);
+        
         return tokenPriceETH;
       
       }
@@ -150,10 +181,17 @@ export const UniswapFunctions = (web3: any) => {
         
         //let ethPriceGecko = await axios.get("https://api.coingecko.com/api/v3/simple/price?ids=Ethereum&vs_currencies=usd");
         
-        let tokenPriceEth = await getTokenPriceETH(address);
+        let tokenPriceEth: any = await getTokenPriceETH(address);
         //let tokenPriceUSD = tokenPriceEth * parseFloat(ethPriceGecko.data.ethereum.usd);
-        let tokenPriceUSD = tokenPriceEth * ethPrice;
-        
+        let tokenPriceUSD = 0;
+        if(tokenPriceEth.usdc == 0) {
+
+            tokenPriceUSD = tokenPriceEth.price * ethPrice;
+            
+        }
+        else {
+            tokenPriceUSD = tokenPriceEth.price;
+        }
         //let ethPrice = await axios.get("https://api.coingecko.com/api/v3/simple/price?ids=Ethereum&vs_currencies=usd");
         
         return tokenPriceUSD;
