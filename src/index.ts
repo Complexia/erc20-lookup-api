@@ -169,21 +169,21 @@ async function getTransferEvents(address: string) {
 }
 
 
-async function getAllTxnsListAllTokens() {
-  let address = "0x43f11c02439e2736800433b4594994bd43cd066d"; //iterate through a list of all tokens and set address to each one
-  let currentBlock = await web3.eth.getBlockNumber();
-  let earliestBlock = 12987858// await uniswapFunctions.getEarliestUniswapPool(address);
-  let txnsList: any = [];
-  for(let i = currentBlock; i > earliestBlock; i-=2000) {
-    let txns = await ethFunctions.getAllTxns(address, i - 2000, i, 10);
-    txnsList = txnsList.concat(txns);
-    console.log(i);
-    console.log(txns);
-    console.log(txnsList.length);
-  }
-  console.log(txnsList);
+// async function getAllTxnsListAllTokens() {
+//   let address = "0x43f11c02439e2736800433b4594994bd43cd066d"; //iterate through a list of all tokens and set address to each one
+//   let currentBlock = await web3.eth.getBlockNumber();
+//   let earliestBlock = 12987858// await uniswapFunctions.getEarliestUniswapPool(address);
+//   let txnsList: any = [];
+//   for(let i = currentBlock; i > earliestBlock; i-=2000) {
+//     let txns = await ethFunctions.getAllTxns(address, i - 2000, i, 10);
+//     txnsList = txnsList.concat(txns);
+//     console.log(i);
+//     console.log(txns);
+//     console.log(txnsList.length);
+//   }
+//   console.log(txnsList);
 
-}
+// }
 
 
 
@@ -767,13 +767,16 @@ async function main() {
   //getAllPoolsV2();
 
   //let contractLink = new web3.eth.Contract(minAbi, addressLink);
-  let linkPool = await uniswapV3Factory.methods.getPool(addressLink, addressWETH, 3000).call();
-  let babyDogePool = await uniswapV2Factory.methods.getPair(addressBabyDoge, addressWETH).call();
-  // let balanceLink = await contractLink.methods.balanceOf(linkPool).call(13000000);
-  // console.log(balanceLink);
-  console.log(linkPool);
-  let volume = await getDailyVolume(babyDogePool, "V3");
-  console.log(volume);
+  // let linkPool = await uniswapV3Factory.methods.getPool(addressLink, addressWETH, 3000).call();
+  // let babyDogePool = await uniswapV2Factory.methods.getPair(addressBabyDoge, addressWETH).call();
+  // // let balanceLink = await contractLink.methods.balanceOf(linkPool).call(13000000);
+  // // console.log(balanceLink);
+  // console.log(linkPool);
+  // let volume = await getDailyVolume(babyDogePool, "V3");
+  // console.log(volume);
+  let currentBlock = await web3.eth.getBlockNumber();
+  let txns = await ethFunctions.getAllTxns(addressLink, currentBlock - 20, currentBlock, 10, 40)
+  console.log(txns);
 
 
 

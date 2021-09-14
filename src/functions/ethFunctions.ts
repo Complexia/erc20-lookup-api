@@ -7,14 +7,14 @@ export const EthFunctions = (web3: any) => {
     let tokenAbi = tokenAbiModule.getAbi();
 
     //gets transactions from last #block blocks (10k limit on alchemy per call) if logs are available (most contracts)
-    const getAllTxns = async( address: string, fromBlock: number, toBlock: number, increment: number ) => {
+    const getAllTxns = async( address: string, fromBlock: number, toBlock: number, increment: number, numberOfTxns: number ) => {
         //if not specified, looks from latest block
         if(fromBlock == 0) {
             fromBlock =  await web3.eth.getBlockNumber();
         }
         //if not specified, checks last 100 blocks
         if(toBlock == 0) {
-            toBlock = 100;
+            toBlock = fromBlock - 100;
         }
         //if not specified, increment by 10 blocks at a time
         if(increment == 0) {
@@ -23,13 +23,14 @@ export const EthFunctions = (web3: any) => {
         
         //gets data from k to n blocks. can be iterated form the front end for more txns
         let txnsData: any = [];
-        //get at least 10 txns
-        while(txnsData.length < 10) {
+        //get at least n txns
+        while(txnsData.length < numberOfTxns) {
+            console.log(fromBlock, toBlock);
             let data = await web3.eth.getPastLogs({ address: address, fromBlock: fromBlock, toBlock: toBlock });
             txnsData = txnsData.concat(data);
-            let x = toBlock;
+            
             toBlock = fromBlock;
-            fromBlock = x - increment;
+            fromBlock = fromBlock - increment;
         }
         
         //let transactionData = await web3.eth.getTransaction("0xf66ad6c21118da5bc8e79cb0912b98cc7a3e30826000bbb419b617417909a5f2");
@@ -74,13 +75,20 @@ export const EthFunctions = (web3: any) => {
     //     return txnsCount;
     // }
 
-    const getTxnsCount = async(address: string, block: number) => {
+    const getTxnsCount = async(address: string) => {
         let currentBlock = await web3.eth.getBlockNumber();
         let txnsCount = 0;
-
-        for(let i = currentBlock; i > block; i-=2000) {
+        let probablyNoMoreIndicator = 0;
+        for(let i = currentBlock; i > 1; i-=2000) {
             let contract = new web3.eth.Contract(tokenAbi, address);
             let data = await contract.getPastEvents('Transfer', { fromBlock: i-2000, toBlock: i });
+            //probably no more txns
+            if(data.length == 0) {
+                probablyNoMoreIndicator++;
+            }
+            if(probablyNoMoreIndicator >= 2) {
+                break;
+            }
             //let data = await web3.eth.getPastLogs({ address: address, fromBlock: i - 2000, toBlock: i });
             txnsCount += data.length;
             console.log(txnsCount, i);

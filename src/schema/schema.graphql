@@ -26,6 +26,11 @@ type DailyVolume {
     token1Volume: String
 }
 
+type TokenPriceETH {
+    usdc: Int
+    price: String
+}
+
 
 type Query {
 
@@ -33,9 +38,9 @@ type Query {
 
     getTotalSupply(address: String): String!
 
-    getTxnsList(address: String, fromBlock: Int, toBlock: Int): [Txn]
+    getTxnsList(address: String, fromBlock: Int, toBlock: Int, numberOfTxns: Int): [Txn]
 
-    getPriceETH(address: String): String!
+    getPriceETH(address: String): TokenPriceETH!
 
     getPriceUSD(address: String): String!
 
@@ -46,6 +51,8 @@ type Query {
     getTotalLiquidity(address: String): String!
 
     getDailyVolume(poolAddress: String, version: String): DailyVolume
+
+    getTxnsCount(address: String): String
 
     
 }

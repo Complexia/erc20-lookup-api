@@ -25,9 +25,9 @@ export const resolvers = {
             return totalSupply;
         },
 
-        getTxnsList: async(_: any, { address, fromBlock, toBlock }) => {
+        getTxnsList: async(_: any, { address, fromBlock, toBlock, numberOfTxns }) => {
             const ethFunctions = EthFunctions(web3);
-            let txnsList = await ethFunctions.getAllTxns(address, fromBlock, toBlock, 10);
+            let txnsList = await ethFunctions.getAllTxns(address, fromBlock, toBlock, 10, numberOfTxns);
             //console.log(txnsList);
             return txnsList;
         },
@@ -66,6 +66,12 @@ export const resolvers = {
             const uniswapFunctions = UniswapFunctions(web3);
             let dailyVolume = await uniswapFunctions.getDailyVolume(poolAddress, version);
             return dailyVolume;
+        },
+
+        getTxnsCount: async(_:any, { address }) => {
+            const ethFunctions = EthFunctions(web3);
+            let txnCount = await ethFunctions.getTxnsCount(address);
+            return txnCount.toString();
         }
 
 
