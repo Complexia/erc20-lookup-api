@@ -36,5 +36,7 @@ type Query {
 
     getPopularPools(address: String): [Pool]
 
+    getTotalLiquidity(address: String) : String!
+
     
 }

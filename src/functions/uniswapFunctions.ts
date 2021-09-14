@@ -441,10 +441,16 @@ export const UniswapFunctions = (web3: any) => {
         }
     
         return pools;
+     
     
-        
-        
-    
+    }
+
+    const getTotalLiquidity = async(address: string) => {
+        let tokenPrice = await getTokenPriceUSD(address);
+        const contract = new web3.eth.Contract(minAbi, address);
+        let totalSupply = await contract.methods.totalSupply().call();
+        let liquidity = tokenPrice * totalSupply;
+        return liquidity;
     }
 
       return {
@@ -452,6 +458,7 @@ export const UniswapFunctions = (web3: any) => {
           getTokenPriceUSD: getTokenPriceUSD,
           getEarliestUniswapPool: getEarliestUniswapPool,
           getContractCreationDate: getContractCreationDate,
-          getPopularPools: getPopularPools
+          getPopularPools: getPopularPools,
+          getTotalLiquidity: getTotalLiquidity
       }
 }

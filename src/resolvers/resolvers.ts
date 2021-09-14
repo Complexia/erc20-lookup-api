@@ -54,6 +54,12 @@ export const resolvers = {
             const uniswapFunctions = UniswapFunctions(web3);
             let popularPools = await uniswapFunctions.getPopularPools(address);
             return popularPools; 
+        },
+
+        getTotalLiquidity: async(_any, { address }) => {
+            const uniswapFunctions = UniswapFunctions(web3);
+            let totalLiquidity = await uniswapFunctions.getTotalLiquidity(address);
+            return totalLiquidity.toString();
         }
 
 
