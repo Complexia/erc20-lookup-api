@@ -56,7 +56,7 @@ export const resolvers = {
             return popularPools; 
         },
 
-        getTotalLiquidity: async(_any, { address }) => {
+        getTotalLiquidity: async(_:any, { address }) => {
             const uniswapFunctions = UniswapFunctions(web3);
             let totalLiquidity = await uniswapFunctions.getTotalLiquidity(address);
             return totalLiquidity.toString();
