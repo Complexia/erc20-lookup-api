@@ -774,9 +774,9 @@ async function main() {
   // console.log(linkPool);
   // let volume = await getDailyVolume(babyDogePool, "V3");
   // console.log(volume);
-  let currentBlock = await web3.eth.getBlockNumber();
-  let txns = await ethFunctions.getAllTxns(addressLink, currentBlock - 20, currentBlock, 10, 40)
-  console.log(txns);
+  // let currentBlock = await web3.eth.getBlockNumber();
+  // let txns = await ethFunctions.getAllTxns(addressLink, currentBlock - 20, currentBlock, 10, 40)
+  // console.log(txns);
 
 
 
