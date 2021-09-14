@@ -453,12 +453,92 @@ export const UniswapFunctions = (web3: any) => {
         return liquidity;
     }
 
+    const getDailyVolume = async(poolAddress: string, uniswapVersion: string) => {
+
+        let uniswapV2FactoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
+        let uniswapV2Factory = new web3.eth.Contract(uniswapV2FactoryAbi, uniswapV2FactoryAddress);
+    
+        let uniswapV3FactoryAddress = "0x1F98431c8aD98523631AE4a59f267346ea31F984";
+        let uniswapV3Factory = new web3.eth.Contract(uniswapV3FactoryAbi, uniswapV3FactoryAddress);
+    
+    
+        let currentBlock = await web3.eth.getBlockNumber();
+        let blockNumber24hago = currentBlock - 5760; //average ethereum blocks produced per day
+    
+        let poolContract: any;
+    
+        if(uniswapVersion == "V3") {
+          poolContract = new web3.eth.Contract(uniswapV3PoolAbi, poolAddress);
+        }
+        else if(uniswapVersion == "V2") {
+          poolContract = new web3.eth.Contract(uniswapV2PoolAbi, poolAddress);
+        }
+        else {
+          console.log("Invalid Uniswap version passed...");
+          return 0;
+        }
+    
+        let token0Address = await poolContract.methods.token0().call();
+        let token1Address = await poolContract.methods.token1().call();
+        console.log(token0Address, token1Address);
+    
+        let token0Contract = new web3.eth.Contract(minAbi, token0Address);
+        let token1Contract = new web3.eth.Contract(minAbi, token1Address);
+    
+        let token0Name = await token0Contract.methods.name().call();
+        let token1Name = await token1Contract.methods.name().call();
+    
+        let token0Decimal = await token0Contract.methods.decimals().call();
+        let token1Decimal = await token1Contract.methods.decimals().call();
+    
+        let token0BalanceNow = await token0Contract.methods.balanceOf(poolAddress).call();
+        let token1BalanceNow  = await token1Contract.methods.balanceOf(poolAddress).call();
+        token0BalanceNow = parseFloat(token0BalanceNow) / Math.pow(10, token0Decimal);
+        token1BalanceNow = parseFloat(token1BalanceNow) / Math.pow(10, token1Decimal);
+    
+        //balance ~24h ago
+        let token0Balance24h = await token0Contract.methods.balanceOf(poolAddress).call(blockNumber24hago);
+        let token1Balance24h  = await token1Contract.methods.balanceOf(poolAddress).call(blockNumber24hago);
+        token0Balance24h = parseFloat(token0Balance24h) / Math.pow(10, token0Decimal);
+        token1Balance24h = parseFloat(token1Balance24h) / Math.pow(10, token1Decimal);
+    
+        let token0Volume = 0;
+        if(token0BalanceNow > token0Balance24h) {
+          token0Volume = token0BalanceNow - token0Balance24h;
+        }
+        else {
+          token0Volume = token0Balance24h - token0BalanceNow;
+        }
+    
+        let token1Volume = 0;
+        if(token1BalanceNow > token1Balance24h) {
+          token1Volume = token1BalanceNow - token1Balance24h;
+        }
+        else {
+          token1Volume = token1Balance24h - token1BalanceNow;
+        }
+    
+    
+        let dailyVolume = {
+          token0Name: token0Name,
+          token0Volume: token0Volume.toString(),
+          token1Name: token1Name,
+          token1Volume: token1Volume.toString()
+        }
+    
+        return dailyVolume;
+    
+    
+    
+    }
+
       return {
           getTokenPriceETH: getTokenPriceETH,
           getTokenPriceUSD: getTokenPriceUSD,
           getEarliestUniswapPool: getEarliestUniswapPool,
           getContractCreationDate: getContractCreationDate,
           getPopularPools: getPopularPools,
-          getTotalLiquidity: getTotalLiquidity
+          getTotalLiquidity: getTotalLiquidity,
+          getDailyVolume: getDailyVolume
       }
 }

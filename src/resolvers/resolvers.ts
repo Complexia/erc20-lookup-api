@@ -60,6 +60,12 @@ export const resolvers = {
             const uniswapFunctions = UniswapFunctions(web3);
             let totalLiquidity = await uniswapFunctions.getTotalLiquidity(address);
             return totalLiquidity.toString();
+        },
+
+        getDailyVolume: async(_:any, { poolAddress, version }) => {
+            const uniswapFunctions = UniswapFunctions(web3);
+            let dailyVolume = await uniswapFunctions.getDailyVolume(poolAddress, version);
+            return dailyVolume;
         }
 
 

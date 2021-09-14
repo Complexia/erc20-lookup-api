@@ -19,6 +19,13 @@ type Pool {
     exchange: String
 }
 
+type DailyVolume {
+    token0Name: String
+    token0Volume: String
+    token1Name: String
+    token1Volume: String
+}
+
 
 type Query {
 
@@ -36,7 +43,9 @@ type Query {
 
     getPopularPools(address: String): [Pool]
 
-    getTotalLiquidity(address: String) : String!
+    getTotalLiquidity(address: String): String!
+
+    getDailyVolume(poolAddress: String, version: String): DailyVolume
 
     
 }
