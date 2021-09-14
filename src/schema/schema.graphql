@@ -8,6 +8,17 @@ type Txn {
     blockNumber: Int
 }
 
+type Pool {
+    token0Name: String
+    token0Symbol: String
+    token0Address: String       
+    token1Name: String
+    token1Symbol: String
+    token1Address: String
+    poolAddress: String
+    exchange: String
+}
+
 
 type Query {
 
@@ -22,6 +33,8 @@ type Query {
     getPriceUSD(address: String): String!
 
     getEarliestUniswapPool(address: String): String!
+
+    getPopularPools(address: String): [Pool]
 
     
 }

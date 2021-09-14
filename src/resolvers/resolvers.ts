@@ -27,7 +27,7 @@ export const resolvers = {
 
         getTxnsList: async(_: any, { address, fromBlock, toBlock }) => {
             const ethFunctions = EthFunctions(web3);
-            let txnsList = await ethFunctions.getAllTxns(address, fromBlock, toBlock);
+            let txnsList = await ethFunctions.getAllTxns(address, fromBlock, toBlock, 10);
             //console.log(txnsList);
             return txnsList;
         },
@@ -48,6 +48,12 @@ export const resolvers = {
             const uniswapFunctions = UniswapFunctions(web3);
             let earliestPool = await uniswapFunctions.getEarliestUniswapPool(address);
             return earliestPool;
+        },
+
+        getPopularPools: async(_:any, { address }) => {
+            const uniswapFunctions = UniswapFunctions(web3);
+            let popularPools = await uniswapFunctions.getPopularPools(address);
+            return popularPools; 
         }
 
 

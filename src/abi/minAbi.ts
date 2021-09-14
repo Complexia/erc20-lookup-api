@@ -27,6 +27,15 @@ export const MinAbi = () => {
                   type: "function",
               
                 },
+                {
+                  name: "symbol",
+                  outputs: [{ type: "string", name: "out" }],
+                  inputs: [],
+                  constant: true,
+                  payable: false,
+                  type: "function",
+                  gas: 753,
+                },
                 
               
               ]

@@ -281,10 +281,177 @@ export const UniswapFunctions = (web3: any) => {
         }
       }
 
+      const getPopularPools = async(address: string) => {
+
+        const minAbiBytes = [  
+            // balanceOf
+            {    
+              constant: true,
+              inputs: [{ name: "_owner", type: "address" }],
+              name: "balanceOf",
+              outputs: [{ name: "balance", type: "uint256" }],
+              type: "function",
+            },
+            //name
+            { 
+              constant: true, 
+              inputs:[],
+              name: "name",
+              outputs: [{name: "", type: "bytes32"}],
+              payable: false, 
+              type: "function"
+            },
+            {
+              constant: true,
+              inputs: [],
+              name: "totalSupply",
+              outputs:[{name: "totalSupply", type: "uint256"}],
+              type: "function",
+          
+            },
+            
+          
+        ];
+
+        const addressUSDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; //USDC 
+        const addressWETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"; //WETH 
+        const addressUSDT = "0xdAC17F958D2ee523a2206206994597C13D831ec7"; //USDT 
+    
+        const uniswapV2FactoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
+        let uniswapV2Factory = new web3.eth.Contract(uniswapV2FactoryAbi, uniswapV2FactoryAddress);
+    
+        const uniswapV3FactoryAddress = "0x1F98431c8aD98523631AE4a59f267346ea31F984";
+        let uniswapV3Factory = new web3.eth.Contract(uniswapV3FactoryAbi, uniswapV3FactoryAddress);
+    
+        let poolAddressWETHV3 = await uniswapV3Factory.methods.getPool(address, addressWETH, 3000).call();
+        let poolAddressUSDCV3 = await uniswapV3Factory.methods.getPool(address, addressUSDC, 3000).call(); 
+        let poolAddressUSDTV3 = await uniswapV3Factory.methods.getPool(address, addressUSDT, 3000).call();
+    
+        let poolAddressWETHV2 = await uniswapV2Factory.methods.getPair(address, addressWETH).call();
+        let poolAddressUSDCV2 = await uniswapV2Factory.methods.getPair(address, addressUSDC).call(); 
+        let poolAddressUSDTV2 = await uniswapV2Factory.methods.getPair(address, addressUSDT).call();
+    
+        // let pairContractWETHV3 = new web3.eth.Contract(uniswapV3PoolAbi, poolAddressWETHV3);
+        // let pairContractUSDCV3 = new web3.eth.Contract(uniswapV3PoolAbi, poolAddressUSDCV3);
+        // let pairContractUSDTV3 = new web3.eth.Contract(uniswapV3PoolAbi, poolAddressUSDTV3);
+    
+        // let pairContractWETHV2 = new web3.eth.Contract(uniswapV2PoolAbi, poolAddressWETHV2);
+        // let pairContractUSDCV2 = new web3.eth.Contract(uniswapV2PoolAbi, poolAddressUSDCV2);
+        // let pairContractUSDTV2 = new web3.eth.Contract(uniswapV2PoolAbi, poolAddressUSDTV2);
+    
+        let tokenContract = new web3.eth.Contract(minAbi, address);
+        
+        let tokenName = "";
+        try {
+
+            tokenName = await tokenContract.methods.name().call();
+        }
+        catch {
+            tokenContract = new web3.eth.Contract(minAbiBytes, address);
+            tokenName = web3.utils.toAscii(await tokenContract.methods.name().call());
+        }
+        //let tokenSymbol = web3.utils.toAscii(await tokenContract.methods.symbol().call());
+        let tokenSymbol = await tokenContract.methods.symbol().call();
+    
+        let pools: any = [];
+        
+        let poolWETHV3 = {
+            token0Name: tokenName,
+            token0Symbol: tokenSymbol,
+            token0Address: address,       
+            token1Name: "Wrapped ETH",
+            token1Symbol: "WETH",
+            token1Address: addressWETH,
+            poolAddress: poolAddressWETHV3,
+            exchange: "Uniswap V3"
+        }
+    
+        let poolUSDCV3 = {
+          token0Name: tokenName,
+          token0Symbol: tokenSymbol,
+          token0Address: address,       
+          token1Name: "USD Coin",
+          token1Symbol: "USDC",
+          token1Address: addressUSDC,
+          poolAddress: poolAddressUSDCV3,
+          exchange: "Uniswap V3"
+        }
+    
+        let poolUSDTV3 = {
+          token0Name: tokenName,
+          token0Symbol: tokenSymbol,
+          token0Address: address,       
+          token1Name: "USD Tether",
+          token1Symbol: "USDT",
+          token1Address: addressUSDT,
+          poolAddress: poolAddressUSDTV3,
+          exchange: "Uniswap V3"
+        }
+    
+        let poolWETHV2 = {
+          token0Name: tokenName,
+          token0Symbol: tokenSymbol,
+          token0Address: address,       
+          token1Name: "Wrapped ETH",
+          token1Symbol: "WETH",
+          token1Address: addressWETH,
+          poolAddress: poolAddressWETHV2,
+          exchange: "Uniswap V2"
+        }
+    
+        let poolUSDCV2 = {
+          token0Name: tokenName,
+          token0Symbol: tokenSymbol,
+          token0Address: address,       
+          token1Name: "USD Coin",
+          token1Symbol: "USDC",
+          token1Address: addressUSDC,
+          poolAddress: poolAddressUSDCV2,
+          exchange: "Uniswap V2"
+        }
+    
+        let poolUSDTV2 = {
+          token0Name: tokenName,
+          token0Symbol: tokenSymbol,
+          token0Address: address,       
+          token1Name: "USD Tether",
+          token1Symbol: "USDT",
+          token1Address: addressUSDT,
+          poolAddress: poolAddressUSDTV2,
+          exchange: "Uniswap V2"
+        }
+    
+        if(poolAddressWETHV3 || !(poolAddressWETHV3 == "0x0000000000000000000000000000000000000000")) {
+          pools.push(poolWETHV3)
+        }
+        if(poolAddressUSDCV3 || !(poolAddressUSDCV3 == "0x0000000000000000000000000000000000000000")) {
+          pools.push(poolUSDCV3)
+        }
+        if(poolAddressUSDTV3 || !(poolAddressUSDTV3 == "0x0000000000000000000000000000000000000000")) {
+          pools.push(poolUSDTV3)
+        }
+        if(poolAddressWETHV2 || !(poolAddressWETHV2 == "0x0000000000000000000000000000000000000000")) {
+          pools.push(poolWETHV2)
+        }
+        if(poolAddressUSDCV2 || !(poolAddressUSDCV2 == "0x0000000000000000000000000000000000000000")) {
+          pools.push(poolUSDCV2)
+        }
+        if(poolAddressUSDTV2 || !(poolAddressUSDTV2 == "0x0000000000000000000000000000000000000000")) {
+          pools.push(poolUSDTV2)
+        }
+    
+        return pools;
+    
+        
+        
+    
+    }
+
       return {
           getTokenPriceETH: getTokenPriceETH,
           getTokenPriceUSD: getTokenPriceUSD,
           getEarliestUniswapPool: getEarliestUniswapPool,
-          getContractCreationDate: getContractCreationDate
+          getContractCreationDate: getContractCreationDate,
+          getPopularPools: getPopularPools
       }
 }

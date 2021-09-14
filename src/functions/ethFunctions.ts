@@ -7,7 +7,7 @@ export const EthFunctions = (web3: any) => {
     let tokenAbi = tokenAbiModule.getAbi();
 
     //gets transactions from last #block blocks (10k limit on alchemy per call) if logs are available (most contracts)
-    const getAllTxns = async( address: string, fromBlock: number, toBlock: number ) => {
+    const getAllTxns = async( address: string, fromBlock: number, toBlock: number, increment: number ) => {
         //if not specified, looks from latest block
         if(fromBlock == 0) {
             fromBlock =  await web3.eth.getBlockNumber();
@@ -15,6 +15,10 @@ export const EthFunctions = (web3: any) => {
         //if not specified, checks last 100 blocks
         if(toBlock == 0) {
             toBlock = 100;
+        }
+        //if not specified, increment by 10 blocks at a time
+        if(increment == 0) {
+            increment = 10;
         }
         
         //gets data from k to n blocks. can be iterated form the front end for more txns
@@ -25,7 +29,7 @@ export const EthFunctions = (web3: any) => {
             txnsData = txnsData.concat(data);
             let x = toBlock;
             toBlock = fromBlock;
-            fromBlock = x - 10;
+            fromBlock = x - increment;
         }
         
         //let transactionData = await web3.eth.getTransaction("0xf66ad6c21118da5bc8e79cb0912b98cc7a3e30826000bbb419b617417909a5f2");
@@ -33,7 +37,7 @@ export const EthFunctions = (web3: any) => {
 
         const contract = new web3.eth.Contract(tokenAbi, address);
         let tokenDecimal = await contract.methods.decimals().call();
-
+        console.log("txnsDara", txnsData.length);
         for(let i = 0; i < txnsData.length; i++) {
             let txn = await web3.eth.getTransaction(txnsData[i].transactionHash);
             let valueEth = parseFloat(txn.value) / Math.pow(10, 18); //from wei
@@ -42,11 +46,12 @@ export const EthFunctions = (web3: any) => {
             let amountTransferred = parseInt(amountHex, 16);
             
             amountTransferred = amountTransferred / Math.pow(10, tokenDecimal);
-            console.log(amountTransferred);
+            
             
             let gasGwei: number = parseFloat(txn.gasPrice) / Math.pow(10, 9); //gas price in gwei
             let txnsFeeEth: number = ((gasGwei + (parseFloat(txn.maxFeePerGas) / Math.pow(10,9))) * (parseFloat(txn.gas) / 10)) / Math.pow(10, 9) ; //gas provided
             txnsList.push({ from: txn.from, to: txn.to, value: valueEth, amount: amountTransferred, gasPaid: gasGwei.toString(), txnFeeEth: txnsFeeEth.toString(), txnHash: txnsData[i].transactionHash, blockNumber: txn.blockNumber })
+            console.log(i)
             console.log(txnsList.length);
         }
 
@@ -55,17 +60,35 @@ export const EthFunctions = (web3: any) => {
     }
 
     //get txns count if no logs on contract from last #block blocks. No cap but very slow
-    const getTxnsCount = async(address: string, block: number ) => {
+    // const getTxnsCount = async(address: string, block: number ) => {
 
+    //     let currentBlock = await web3.eth.getBlockNumber();
+    //     let txnsCount = 0; //await web3.eth.getTransactionCount(address, currentBlock);
+    
+    //     for(let i = currentBlock; i > currentBlock - block; i--) {
+    //         let txnsCountThisBlock = await web3.eth.getTransactionCount(address, i);
+    //         txnsCount += txnsCountThisBlock;
+    //         console.log(i);
+    //     }
+    
+    //     return txnsCount;
+    // }
+
+    const getTxnsCount = async(address: string, block: number) => {
         let currentBlock = await web3.eth.getBlockNumber();
-        let txnsCount = 0; //await web3.eth.getTransactionCount(address, currentBlock);
-    
-        for(let i = currentBlock; i > currentBlock - block; i--) {
-            let txnsCountThisBlock = await web3.eth.getTransactionCount(address, i);
-            txnsCount += txnsCountThisBlock;
+        let txnsCount = 0;
+
+        for(let i = currentBlock; i > block; i-=2000) {
+            let contract = new web3.eth.Contract(tokenAbi, address);
+            let data = await contract.getPastEvents('Transfer', { fromBlock: i-2000, toBlock: i });
+            //let data = await web3.eth.getPastLogs({ address: address, fromBlock: i - 2000, toBlock: i });
+            txnsCount += data.length;
+            console.log(txnsCount, i);
+            
         }
-    
         return txnsCount;
+
+        
     }
 
     //gets all txns from #block when no logs are available on contract
