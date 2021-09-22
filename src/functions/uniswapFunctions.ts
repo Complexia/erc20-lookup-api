@@ -41,35 +41,46 @@ export const UniswapFunctions = (web3: any) => {
 
         let contractToken = new web3.eth.Contract(tokenAbi, address);
         let contractWeth = new web3.eth.Contract(minAbi, wethAddress);
+
+        let addressUSDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+        let addressUSDT = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
+        let usdcIndicator = 0;
+        let stagePoolAddresses: any = [];
         
         //let events = await uniswap.getPastEvents("PoolCreated", { fromBlock: uniswapV3FactoryCreationBlock, toBlock: currentBlock });
         let poolAddress = await uniswapV3Factory.methods.getPool(address, wethAddress, 3000).call();
+        stagePoolAddresses.push(poolAddress);
         
-        if(!poolAddress || poolAddress == "0x0000000000000000000000000000000000000000") {
-            
-            poolAddress = await uniswapV3Factory.methods.getPool(address, wethAddress, 10000).call();
-            
-        }
-        if(!poolAddress || poolAddress == "0x0000000000000000000000000000000000000000") {
-            
-            poolAddress = await uniswapV3Factory.methods.getPool(address, wethAddress, 500).call();
-        }
         
+            
+        poolAddress = await uniswapV3Factory.methods.getPool(address, wethAddress, 10000).call();
+        stagePoolAddresses.push(poolAddress);
+        
+        
+            
+        poolAddress = await uniswapV3Factory.methods.getPool(address, wethAddress, 500).call();
+        stagePoolAddresses.push(poolAddress);
+        
+        console.log(stagePoolAddresses);
+        poolAddress = stagePoolAddresses[0];
         
         if(!poolAddress || !(poolAddress == "0x0000000000000000000000000000000000000000")) {
             let balanceWeth = await contractWeth.methods.balanceOf(poolAddress).call();
             //balanceWeth = parseFloat(balanceWeth) / Math.pow(10,18);
             
-            if(!(balanceWeth < 95000000000016)) {
+            if(!(balanceWeth < 0.2 * Math.pow(10, 18))) {
                 poolAddresses.push(poolAddress);
+                console.log(poolAddress);
             
             }
             
             
         }
-        let addressUSDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
-        let addressUSDT = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
-        let usdcIndicator = 0;
+
+        
+    
+        
+        
         if(poolAddresses.length == 0) {
             console.log("UniswapV3 has no pools for this token...Searching V2...");
             let pairAddress = await uniswapV2Factory.methods.getPair(address, wethAddress).call();
@@ -96,13 +107,15 @@ export const UniswapFunctions = (web3: any) => {
         if(poolAddresses.length == 0) {
             console.log("Uniswap V2 does not have pools for this token...");
             versionIndicator = 0;
-            return 0;
+            
         }
         let tokenPriceETH = {
             usdc: 0,
             price: 0
         };
+        
         if(versionIndicator == 3) {
+          
             let contractPoolV3 = new web3.eth.Contract(uniswapV3PoolAbi, poolAddresses[0]);
             console.log(poolAddresses[0]);
             let n = await contractPoolV3.methods.slot0().call();
@@ -124,7 +137,7 @@ export const UniswapFunctions = (web3: any) => {
 
 
         }
-        else if(versionIndicator = 2) {
+        else if(versionIndicator == 2) {
             //let contractPoolV2 = new web3.eth.Contract(uniswapV2PoolAbi, poolAddresses[0]);
             let contractToken = new web3.eth.Contract(tokenAbi, address);
             let contractToken2 = new web3.eth.Contract(minAbi, wethAddress);
@@ -153,7 +166,8 @@ export const UniswapFunctions = (web3: any) => {
             tokenPriceETH.price = 1/ (balanceToken / balanceToken2);
             
         }
-        else {
+        else if(versionIndicator == 0) {
+            
             tokenPriceETH.price = 0;
         }
         

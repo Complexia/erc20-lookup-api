@@ -18,9 +18,57 @@ import { UniswapV2PoolAbi } from "./abi/uniswapV2PoolAbi";
 import { UniswapV3RouterAbi } from "./abi/uniswapV3RouterAbi";
 import { UniswapV2RouterAbi } from "./abi/uniswapV2RouterAbi";
 import { UniswapFunctions } from "./functions/uniswapFunctions";
+import * as fs from 'fs';
+import * as https from 'https';
+import * as http from 'http';
 const axios = require('axios').default;
-
 dotenv.config();
+
+async function startApolloServer() {
+  const configurations = {
+    // Note: You may need sudo to run on port 443
+    production: { ssl: true, port: 443, hostname: 'full-api.com' },
+    development: { ssl: false, port: 4000, hostname: 'localhost' },
+
+    
+  };
+  const typeDefs = importSchema(path.join(__dirname, 'schema/schema.graphql'))
+  const environment = process.env.NODE_ENV || 'production';
+  const config = configurations[environment];
+  const server = new ApolloServer({ typeDefs, resolvers });
+  await server.start();
+
+  const app = express();
+  server.applyMiddleware({ app });
+
+
+  // Create the HTTPS or HTTP server, per configuration
+  let httpServer;
+  if (config.ssl) {
+    // Assumes certificates are in a .ssl folder off of the package root.
+    // Make sure these files are secured.
+    httpServer = https.createServer(
+      {
+        
+        key: fs.readFileSync("key1.pem"),
+        cert: fs.readFileSync("server.crt")
+      },
+      app,
+    );
+  } else {
+    httpServer = http.createServer(app);
+  }
+
+  await new Promise(resolve => httpServer.listen({ port: config.port }, resolve));
+  console.log(
+    '🚀 Server ready at',
+    `http${config.ssl ? 's' : ''}://${config.hostname}:${config.port}${server.graphqlPath}`
+  );
+  return { server, app };
+  
+}
+
+//startApolloServer();
 
 const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
 const uri = `https://eth-mainnet.alchemyapi.io/v2/${process.env.API_KEY}`;
@@ -57,6 +105,7 @@ const typeDefs = importSchema(path.join(__dirname, 'schema/schema.graphql'))
 const server = new ApolloServer({ typeDefs, resolvers });
 
 //Launches Express server, to which Apollo is integrated
+
 const startServer = async() => {
   console.log("hi");
   await server.start();
@@ -186,9 +235,12 @@ async function getTransferEvents(address: string) {
 // }
 
 
+function catchEm(promise) {
+  return promise.then(data => [null, data])
+    .catch(err => [err]);
+}
 
-
-async function getAllPoolsV2() {
+async function getAllPoolsV2(startIterator: number) {
 
   let minAbiBytes = [  
     // balanceOf
@@ -220,159 +272,125 @@ async function getAllPoolsV2() {
   
   ];
 
+  let minAbi = [  
+    // balanceOf
+    {    
+      constant: true,
+      inputs: [{ name: "_owner", type: "address" }],
+      name: "balanceOf",
+      outputs: [{ name: "balance", type: "uint256" }],
+      type: "function",
+    },
+    //name
+    { 
+      constant: true, 
+      inputs:[],
+      name: "name",
+      outputs: [{name: "", type: "string"}],
+      payable: false, 
+      type: "function"
+    },
+    {
+      constant: true,
+      inputs: [],
+      name: "totalSupply",
+      outputs:[{name: "totalSupply", type: "uint256"}],
+      type: "function",
+  
+    },
+    {
+      name: "symbol",
+      outputs: [{ type: "string", name: "out" }],
+      inputs: [],
+      constant: true,
+      payable: false,
+      type: "function",
+      gas: 753,
+    },
+    {
+      name: "decimals",
+      outputs: [{ type: "uint256", name: "out" }],
+      inputs: [],
+      constant: true,
+      payable: false,
+      type: "function",
+      gas: 783,
+    },
+    
+  
+  ];
+
   let uniswapV2FactoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
   let uniswapV2Factory = new web3.eth.Contract(uniswapV2FactoryAbi, uniswapV2FactoryAddress);
   let allPairsLength = await uniswapV2Factory.methods.allPairsLength().call();
   console.log(allPairsLength);
   let poolArray: any = [];
 
-  // for(let i = 0; i < allPairsLength; i++) {
-
-  //   let poolAddress = await uniswapV2Factory.methods.allPairs(i).call();
   
-  //   let pairContract = new web3.eth.Contract(uniswapV2PoolAbi, poolAddress);
-  //   let token0Address = await pairContract.methods.token0().call();
-  //   let token0Contract = new web3.eth.Contract(minAbi, token0Address);
-  //   let token0Name = "";
-  //   try {
-  //     token0Name = await token0Contract.methods.name().call();
-  //   }
-  //   catch {
-  //     token0Contract = new web3.eth.Contract(minAbiBytes, token0Address);
-  //     token0Name = web3.utils.toAscii(await token0Contract.methods.name().call());
-  //   }
-    
-  //   let token1Address = await pairContract.methods.token1().call();
-  //   let token1Contract = new web3.eth.Contract(minAbi, token1Address);
-  //   let token1Name = "";
-  //   try {
-  //     token1Name = await token1Contract.methods.name().call();
-  //   }
-  //   catch {
-  //     token1Contract = new web3.eth.Contract(minAbiBytes, token1Address);
-  //     token1Name = await token1Contract.methods.name().call();
-  //   }
 
-    
-  //   let pool = {
-  //     token0Name: token0Name,
-  //     token1Name: token1Name,
-  //     token0Address: token0Address,
-  //     token1Address: token1Address,
-  //     poolAddress: poolAddress
-  //   }
-  //   console.log(pool);
-  //   console.log(i);
-  //   poolArray.push(pool);
+    for(let i = startIterator; i < allPairsLength; i++) {
 
-  // }
-
-
-
-    let poolAddress = await uniswapV2Factory.methods.allPairs(58).call();
-    
-    
-    let pairContract = new web3.eth.Contract(uniswapV2PoolAbi, poolAddress);
-    let token0Address = await pairContract.methods.token0().call();
-    let token0Contract = new web3.eth.Contract(minAbi, token0Address);
-    console.log("here");
-    console.log(token0Address);
-    let token0Name = "";
-    try {
-      token0Name = await token0Contract.methods.name().call();
-    }
-    catch {
-      token0Contract = new web3.eth.Contract(minAbiBytes, token0Address);
-      
-
-      token0Name = web3.utils.toAscii(await token0Contract.methods.name().call());
+      let poolAddress = await uniswapV2Factory.methods.allPairs(i).call();
       
       
-    }
-    
-    let token1Address = await pairContract.methods.token1().call();
-    let token1Contract = new web3.eth.Contract(minAbi, token1Address);
-    let token1Name = "";
-    try {
-      token1Name = await token1Contract.methods.name().call();
-    }
-    catch {
-      token1Contract = new web3.eth.Contract(minAbiBytes, token1Address);
-      token1Name = await token1Contract.methods.name().call();
-    }
-
-
-      let pool = {
-        token0Name: token0Name,
-        token1Name: token1Name,
-        token0Address: token0Address,
-        token1Address: token1Address,
-        poolAddress: poolAddress
+      let pairContract = new web3.eth.Contract(uniswapV2PoolAbi, poolAddress);
+      let token0Address = await pairContract.methods.token0().call();
+      let token0Contract = new web3.eth.Contract(minAbi, token0Address);
+      
+      
+      let token0Name = "";
+      try {
+        token0Name = await token0Contract.methods.name().call();
       }
-      console.log(pool);
+      catch {
+        token0Contract = new web3.eth.Contract(minAbiBytes, token0Address);
+        
+  
+        token0Name = web3.utils.toAscii(await token0Contract.methods.name().call());
+        
+        
+      }
       
-      
-
-
-
-
-
-
-
-
-
-  // let poolAddress = await uniswapV2Factory.methods.allPairs(25).call();
-  // console.log(poolAddress, 25);
-  // let pairContract = new web3.eth.Contract(uniswapV2PoolAbi, poolAddress);
-  // let token0Address = await pairContract.methods.token0().call();
-  // console.log(token0Address);
-  // let token0Contract = new web3.eth.Contract(minAbi, token0Address);
-  // try {
-  //   let token0Name = web3.utils.toAscii(await token0Contract.methods.name().call());
-  // }
-  // catch {
-  //   console.log("caught");
-  //   token0Contract = new web3.eth.Contract(minAbiBytes, token0Address);
-  //   let token0Name = web3.utils.toAscii(await token0Contract.methods.name().call());
-  //   console.log(token0Name);
-  // }
-  
-  // let token1Address = await pairContract.methods.token1().call();
-  // let token1Contract = new web3.eth.Contract(minAbi, token1Address);
-  // let token1Name = await token1Contract.methods.name().call();
-  // console.log(token1Name);
-
-  
-  // let pool = {
-  //   token0Name: token0Name,
-  //   token1Name: token1Name,
-  //   token0Address: token0Address,
-  //   token1Address: token1Address,
-  //   poolAddress: poolAddress
-  // }
-  // //poolArray.push(pool);
-
-
-  // console.log(pool);
-
-
-
+      let token1Address = await pairContract.methods.token1().call();
+      let token1Contract = new web3.eth.Contract(minAbi, token1Address);
+      let token1Name = "";
+      try {
+        token1Name = await token1Contract.methods.name().call();
+      }
+      catch {
+        token1Contract = new web3.eth.Contract(minAbiBytes, token1Address);
+        token1Name = await token1Contract.methods.name().call();
+      }
   
   
-  let data = JSON.stringify(poolArray);
-  
-  //console.log(token1Name);
-  //token0Name, token1Name, token0Address, token1Address, poolAddress, 
+        let pool = {
+          poolIndex: i,
+          token0Name: token0Name,
+          token1Name: token1Name,
+          token0Address: token0Address,
+          token1Address: token1Address,
+          poolAddress: poolAddress
+        }
 
-  // const fs = require('fs');
+        
+        const fs = require('fs');
+        let uniswapPoolsV2 = fs.readFileSync("uniswapV2Pools.json");
+        let pools = JSON.parse(uniswapPoolsV2);
+        pools.push(pool);
+        let data = JSON.stringify(pools);
+        // write JSON string to a file
+        fs.writeFileSync("uniswapV2Pools.json",data);
+        console.log("Pool", i, "pushed into pools json");
+        // fs.writeFileSync('uniswapV2Pools.json', data, (err) => {
+        //   if (err) {
+        //       throw err;
+        //   }
+        //   console.log("JSON data is saved for pool ", i);
+        // });
+        
+    }
 
-  // // write JSON string to a file
-  // fs.writeFile('uniswapV2Pools.json', data, (err) => {
-  //   if (err) {
-  //       throw err;
-  //   }
-  //   console.log("JSON data is saved.");
-  // });
+
 
 }
 
@@ -777,14 +795,25 @@ async function main() {
   // let currentBlock = await web3.eth.getBlockNumber();
   // let txns = await ethFunctions.getAllTxns(addressLink, currentBlock - 20, currentBlock, 10, 40)
   // console.log(txns);
+  let startIterator = 0;
+  while(startIterator < 52146) {
 
-
+    const [err, data] = await catchEm(getAllPoolsV2(startIterator));
+    if(err) {
+      const fs = require('fs');
+      let uniswapPoolsV2 = fs.readFileSync("uniswapV2Pools.json");
+      let pools = JSON.parse(uniswapPoolsV2);
+      let lastPoolIndex = pools[pools.length - 1].poolIndex;
+      startIterator = lastPoolIndex + 1;
+    }
+  }
+  
 
 }
 
 
 
-main();
+//main();
 
 
 
